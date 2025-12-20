@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Chủ - Hệ Thống Tủ Đông</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            text-decoration: none;
+            color: white;
+            border-radius: 5px;
+        }
+
+        .btn-login {
+            background-color: #3498db;
+        }
+
+        .btn-register {
+            background-color: #2ecc71;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Hệ Thống Giám Sát Tủ Đông</h1>
+    <p>Chào mừng bạn đến với hệ thống quản lý.</p>
+
+    <div id="guest-area">
+        <p>Vui lòng đăng nhập hoặc đăng ký để tiếp tục.</p>
+        <a href="/login.html" class="btn btn-login">Đăng Nhập</a>
+        <a href="/register.html" class="btn btn-register">Đăng Ký</a>
+    </div>
+
+    <div id="user-area" style="display: none; margin-top: 30px;">
+        <h3>Xin chào, <span id="username-display"></span>!</h3>
+        <p>Vai trò của bạn: <span id="role-display" style="font-weight: bold;"></span></p>
+        <button onclick="logout()"
+            style="padding: 10px; background: #e74c3c; color: white; border: none; cursor: pointer;">Đăng Xuất</button>
+    </div>
+
+    <script>
+        // Kiểm tra xem đã có token trong máy chưa
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        if (token) {
+            document.getElementById('guest-area').style.display = 'none';
+            document.getElementById('user-area').style.display = 'block';
+            document.getElementById('role-display').innerText = role.toUpperCase();
+            document.getElementById('username-display').innerText = "Người dùng"; // Tạm thời
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            window.location.reload(); // Tải lại trang
+        }
+    </script>
+</body>
+
+</html>

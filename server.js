@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const { connectDB, sequelize } = require('./src/config/db');
 
 // Gọi các tuyến đường (Routes)
@@ -14,6 +15,10 @@ const PORT = process.env.PORT || 5000;
 // Middleware (Bộ lọc)
 app.use(cors()); // Cho phép Frontend gọi vào
 app.use(express.json()); // Đọc được dữ liệu JSON gửi lên
+// --- THÊM DÒNG NÀY (Kích hoạt thư mục public) ---
+// Nó bảo server: "Thư mục chứa file tĩnh tên là 'public' nằm cùng cấp với file này"
+app.use(express.static(path.join(__dirname, 'public')));
+// -------------------------------------------------
 
 // --- KẾT NỐI DATABASE ---
 connectDB(); // 1. Thử kết nối
@@ -25,11 +30,9 @@ connectDB(); // 1. Thử kết nối
 sequelize.sync({ force: false }).then(() => {
     console.log('✅ Database & Tables đã được đồng bộ!');
 });
-
 // --- ĐỊNH NGHĨA ĐƯỜNG DẪN (API) ---
 // Bất cứ cái gì bắt đầu bằng /api/auth sẽ đi vào authRoutes
 app.use('/api/auth', authRoutes);
-
 // Route test server sống hay chết
 app.get('/', (req, res) => {
     res.send('Server Tủ Đông đang chạy vù vù!');
