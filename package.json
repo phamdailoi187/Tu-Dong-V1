@@ -1,0 +1,19 @@
+{
+  "name": "tu-dong-v1",
+  "version": "1.0.0",
+  "description": "Đây là dự án xây dựng hệ thống giám sát tủ đông tự động",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1"
+  }
+}
