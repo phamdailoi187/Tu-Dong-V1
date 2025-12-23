@@ -2,10 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const seedAdmin = require('./src/config/seeder'); // <--- Import seeder
 const { connectDB, sequelize } = require('./src/config/db');
 
 // Gọi các tuyến đường (Routes)
 const authRoutes = require('./src/routes/authRoutes');
+const userRoutes = require('./src/routes/userRoutes');
 
 // Cấu hình
 dotenv.config();
@@ -27,13 +29,14 @@ connectDB(); // 1. Thử kết nối
 // LƯU Ý QUAN TRỌNG:
 // - Lần đầu chạy hoặc khi mới sửa Model (thêm cột email): để force: true
 // - Chạy xong 1 lần thì sửa lại thành force: false ngay (để không bị mất dữ liệu cũ)
-sequelize.sync({ force: false }).then(() => {
-    console.log('✅ Database & Tables đã được đồng bộ!');
+sequelize.sync({ force: false }).then(async () => { // Nhớ force: true lần đầu để cập nhật cột mới
+    console.log('✅ Database đã được đồng bộ!');
+    await seedAdmin(); // <--- Chạy hàm tạo Admin
 });
+
 // --- ĐỊNH NGHĨA ĐƯỜNG DẪN (API) ---
-// Bất cứ cái gì bắt đầu bằng /api/auth sẽ đi vào authRoutes
 app.use('/api/auth', authRoutes);
-// Route test server sống hay chết
+app.use('/api/users', userRoutes);
 app.get('/', (req, res) => {
     res.send('Server Tủ Đông đang chạy vù vù!');
 });

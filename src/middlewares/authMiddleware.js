@@ -24,7 +24,6 @@ const verifyToken = (req, res, next) => {
         return res.status(403).json({ message: 'Token đểu hoặc đã hết hạn!' });
     }
 };
-
 // 2. Bảo vệ: Kiểm tra Quyền (Có được phép làm việc này không?)
 // Hàm này nhận vào danh sách các role được phép. VD: ['admin', 'gsv']
 const checkRole = (allowedRoles) => {

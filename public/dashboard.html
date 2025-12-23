@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Điều Khiển - Duyệt Thành Viên</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #f4f6f9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .btn-approve {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-approve:hover {
+            background: #219150;
+        }
+
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .role-gsv {
+            background: #e67e22;
+            color: white;
+        }
+
+        .role-nvyt {
+            background: #3498db;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>📋 Danh Sách Chờ Duyệt</h2>
+        <p>Xin chào, <b id="current-user">...</b> (<span id="current-role">...</span>)</p>
+
+        <table id="userTable">
+            <thead>
+                <tr>
+                    <th>Họ Tên</th>
+                    <th>Tên Đăng Nhập</th>
+                    <th>Vai Trò</th>
+                    <th>Mã NV</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <p id="empty-msg" style="text-align: center; color: #777; margin-top: 20px;">Không có yêu cầu nào.</p>
+
+        <div style="margin-top: 20px; text-align: right;">
+            <a href="/index.html" style="text-decoration: none; color: #555;">← Quay về trang chủ</a>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+
+        // 1. Kiểm tra quyền (Nếu là NVYT hoặc chưa đăng nhập thì đuổi ra)
+        if (!token || role === 'nvyt') {
+            alert('Bạn không có quyền truy cập trang này!');
+            window.location.href = '/index.html';
+        }
+
+        // Hiển thị tên người đang dùng
+        document.getElementById('current-role').innerText = role.toUpperCase();
+
+        // 2. Hàm lấy danh sách từ API
+        async function fetchPendingUsers() {
+            try {
+                const res = await fetch('http://localhost:8080/api/users/pending', {
+                    headers: { 'Authorization': 'Bearer ' + token } // Gửi kèm vé
+                });
+                const users = await res.json();
+
+                const tbody = document.querySelector('#userTable tbody');
+                tbody.innerHTML = ''; // Xóa bảng cũ
+
+                if (users.length > 0) {
+                    document.getElementById('empty-msg').style.display = 'none';
+                    users.forEach(user => {
+                        const row = `
+                            <tr>
+                                <td>${user.fullName}</td>
+                                <td>${user.username}</td>
+                                <td><span class="role-badge role-${user.role}">${user.role.toUpperCase()}</span></td>
+                                <td>${user.employeeCode || '-'}</td>
+                                <td>
+                                    <button class="btn-approve" onclick="approveUser(${user.id})">✅ Duyệt</button>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    });
+                } else {
+                    document.getElementById('empty-msg').style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Lỗi tải dữ liệu!');
+            }
+        }
+
+        // 3. Hàm Duyệt User
+        async function approveUser(id) {
+            if (!confirm('Bạn có chắc chắn muốn duyệt thành viên này?')) return;
+
+            try {
+                const res = await fetch(`http://localhost:8080/api/users/approve/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(data.message);
+                    fetchPendingUsers(); // Tải lại bảng
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            } catch (err) {
+                alert('Lỗi kết nối server!');
+            }
+        }
+
+        // Chạy ngay khi vào trang
+        fetchPendingUsers();
+    </script>
+</body>
+
+</html>

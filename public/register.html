@@ -51,7 +51,10 @@
         <input type="text" id="username" placeholder="Tên đăng nhập" required>
         <input type="email" id="email" placeholder="Email" required>
         <input type="password" id="password" placeholder="Mật khẩu" required>
-
+        <label>Thông tin cá nhân</label>
+        <input type="text" id="fullName" placeholder="Họ và tên đầy đủ (Bắt buộc)" required>
+        <input type="text" id="employeeCode" placeholder="Mã nhân viên (Nếu có)">
+        <input type="tel" id="phoneNumber" placeholder="Số điện thoại">
         <label for="role">Chọn vai trò:</label>
         <select id="role">
             <option value="nvyt">Nhân viên Y tế (NVYT)</option>
@@ -73,9 +76,12 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const role = document.getElementById('role').value;
+            const fullName = document.getElementById('fullName').value;
+            const employeeCode = document.getElementById('employeeCode').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
 
             // 2. Gói dữ liệu thành JSON
-            const dataToSend = { username, email, password, role };
+            const dataToSend = { username, email, password, role, fullName, employeeCode, phoneNumber };
 
             try {
                 // 3. Gửi đến API Backend (CHÚ Ý PORT 8080)
@@ -88,10 +94,11 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert('✅ ' + result.message); // Hiện thông báo thành công
-                    window.location.href = '/login.html'; // Chuyển sang trang đăng nhập
+                    // Thông báo thành công và nhắc chờ duyệt
+                    alert('✅ ' + result.message);
+                    window.location.href = '/login.html';
                 } else {
-                    alert('❌ Lỗi: ' + result.message); // Hiện lỗi (VD: Trùng tên)
+                    alert('❌ Lỗi: ' + result.message);
                 }
 
             } catch (error) {

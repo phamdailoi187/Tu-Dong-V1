@@ -24,6 +24,31 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    // 1. THÊM THÔNG TIN ĐỊNH DANH CAO
+    fullName: {
+        type: DataTypes.STRING,
+        allowNull: false // Bắt buộc phải có tên thật
+    },
+    employeeCode: {
+        type: DataTypes.STRING,
+        allowNull: true // Mã nhân viên (có thể bổ sung sau)
+    },
+    phoneNumber: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+
+    // 2. GIỮ NGUYÊN ROLE
+    role: {
+        type: DataTypes.ENUM('admin', 'gsv', 'nvyt'),
+        defaultValue: 'nvyt'
+    },
+
+    // 3. THÊM TRẠNG THÁI KÍCH HOẠT (QUAN TRỌNG)
+    isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false // Mặc định tạo xong là BỊ KHÓA, chờ duyệt  mới kích hoạt
+    },
     role: {
         type: DataTypes.ENUM('admin', 'gsv', 'nvyt'), // Chỉ cho phép 3 quyền này
         defaultValue: 'nvyt' // Mặc định là nhân viên y tế

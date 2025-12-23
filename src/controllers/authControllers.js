@@ -6,7 +6,11 @@ const { Op } = require("sequelize");
 // 1. Đăng Ký
 exports.register = async (req, res) => {
     try {
-        const { username, password, role, email } = req.body;
+        const { username, password, role, email, fullName, employeeCode, phoneNumber } = req.body;
+
+        if (role === 'admin') {
+            return res.status(403).json({ message: 'Không thể tự đăng ký quyền Admin!' });
+        }
 
         // Check trùng tên hoặc email
         const existingUser = await User.findOne({
@@ -25,13 +29,15 @@ exports.register = async (req, res) => {
 
         // Tạo user
         const newUser = await User.create({
-            username,
-            email,
+            username, email, fullName, employeeCode, phoneNumber,
             password: hashedPassword,
             role: role || 'nvyt'
         });
 
-        res.status(201).json({ message: 'Đăng ký thành công!', user: newUser.username });
+        res.status(201).json({
+            message: 'Đăng ký thành công! Vui lòng chờ cấp trên phê duyệt tài khoản.',
+            user: newUser.username
+        });
     } catch (error) {
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
@@ -46,6 +52,10 @@ exports.login = async (req, res) => {
         const user = await User.findOne({ where: { username } });
         if (!user) {
             return res.status(404).json({ message: 'Không tìm thấy người dùng!' });
+        }
+
+        if (user.isActive === false) {
+            return res.status(403).json({ message: 'Tài khoản của bạn chưa được phê duyệt!' });
         }
 
         // Check pass
