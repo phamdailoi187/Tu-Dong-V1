@@ -1,17 +1,22 @@
-const User = require('../models/user'); // Lưu ý: file model ông đặt là user (chữ thường)
+const User = require('../models/user');
+const Role = require('../models/role');
+const Session = require('../models/session'); // <--- Import Session
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { Op } = require("sequelize");
+const crypto = require('crypto');
 
 // 1. Đăng Ký
 exports.register = async (req, res) => {
     try {
-        const { username, password, role, email, fullName, employeeCode, phoneNumber } = req.body;
+        const { username, password, email, fullName, employeeCode, phoneNumber, hospitalId } = req.body;
 
-        if (role === 'admin') {
-            return res.status(403).json({ message: 'Không thể tự đăng ký quyền Admin!' });
+        if (!hospitalId) {
+            return res.status(400).json({ message: 'Vui lòng chọn Bệnh viện công tác!' });
         }
-
+        const hospitalExists = await Hospital.findByPk(hospitalId);
+        if (!hospitalExists) {
+            return res.status(404).json({ message: 'Bệnh viện không tồn tại!' });
+        }
         // Check trùng tên hoặc email
         const existingUser = await User.findOne({
             where: {
@@ -27,11 +32,16 @@ exports.register = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Tạo user
         const newUser = await User.create({
-            username, email, fullName, employeeCode, phoneNumber,
+            username,
+            email,
             password: hashedPassword,
-            role: role || 'nvyt'
+            fullName,
+            employeeCode,
+            phoneNumber,
+            hospitalId,
+            role: 'medical_staff', // <--- HARDCODE CỨNG: Mày là ai tao không cần biết, đăng ký ở đây thì chỉ là staff thôi.
+            isActive: false        // <--- Chờ duyệt
         });
 
         res.status(201).json({
@@ -42,41 +52,63 @@ exports.register = async (req, res) => {
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 };
-
 // 2. Đăng Nhập
 exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        // Tìm user
-        const user = await User.findOne({ where: { username } });
-        if (!user) {
-            return res.status(404).json({ message: 'Không tìm thấy người dùng!' });
-        }
+        // 1. Tìm User + Kèm theo Role của họ
+        const user = await User.findOne({
+            where: { username },
+            include: [{
+                model: Role,
+                attributes: ['slug'], // Chỉ lấy cái tên code (vd: sieu_admin)
+                through: { attributes: [] } // Ẩn bảng trung gian cho gọn
+            }]
+        });
 
-        if (user.isActive === false) {
-            return res.status(403).json({ message: 'Tài khoản của bạn chưa được phê duyệt!' });
-        }
+        // Check user tồn tại và đã kích hoạt
+        if (!user) return res.status(404).json({ message: 'Tài khoản không tồn tại!' });
+        if (!user.isActive) return res.status(403).json({ message: 'Tài khoản chưa được kích hoạt!' });
 
-        // Check pass
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Sai mật khẩu!' });
-        }
+        // 2. Check Mật khẩu
+        const validPass = await bcrypt.compare(password, user.password);
+        if (!validPass) return res.status(400).json({ message: 'Sai mật khẩu!' });
 
-        // Cấp vé (Token)
-        const token = jwt.sign(
-            { id: user.id, role: user.role },
-            process.env.JWT_SECRET || 'bi_mat',
-            { expiresIn: '1d' }
+        // 3. Lấy danh sách Role ra mảng (Ví dụ: ['sieu_admin'])
+        const roles = user.Roles ? user.Roles.map(r => r.slug) : [];
+
+        // 4. Tạo Access Token (Vé vào cửa ngắn hạn - 1 tiếng)
+        const accessToken = jwt.sign(
+            { id: user.id, roles: roles, hospitalId: user.hospitalId },
+            process.env.JWT_SECRET || 'secret_key',
+            { expiresIn: '1h' }
         );
 
-        res.status(200).json({
-            message: 'Đăng nhập thành công!',
-            token,
-            role: user.role
+        // 5. TẠO SESSION (Lưu vết đăng nhập)
+        const refreshToken = crypto.randomBytes(64).toString('hex'); // Vé dài hạn
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); // Hết hạn sau 7 ngày
+
+        await Session.create({
+            userId: user.id,
+            refreshToken: refreshToken,
+            deviceInfo: req.headers['user-agent'] || 'Unknown',
+            ipAddress: req.ip || req.connection.remoteAddress,
+            expiresAt: expiresAt
         });
+
+        // 6. Trả kết quả về cho Client
+        res.json({
+            message: 'Đăng nhập thành công!',
+            accessToken,
+            refreshToken,
+            username: user.username,
+            roles: roles
+        });
+
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 };

@@ -37,21 +37,15 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true
     },
-
-    // 2. GIỮ NGUYÊN ROLE
-    role: {
-        type: DataTypes.ENUM('admin', 'gsv', 'nvyt'),
-        defaultValue: 'nvyt'
-    },
-
-    // 3. THÊM TRẠNG THÁI KÍCH HOẠT (QUAN TRỌNG)
     isActive: {
         type: DataTypes.BOOLEAN,
         defaultValue: false // Mặc định tạo xong là BỊ KHÓA, chờ duyệt  mới kích hoạt
     },
-    role: {
-        type: DataTypes.ENUM('admin', 'gsv', 'nvyt'), // Chỉ cho phép 3 quyền này
-        defaultValue: 'nvyt' // Mặc định là nhân viên y tế
+    hospitalId: {
+        type: DataTypes.INTEGER,
+        allowNull: true // Super Admin thì không có bệnh viện -> Null
+        // Không cần khai báo references ở đây cũng được, 
+        // vì đoạn User.belongsTo bên server.js sẽ lo việc liên kết khóa ngoại.
     }
 }, {
     timestamps: true // Tự động tạo cột createdAt, updatedAt

@@ -3,19 +3,27 @@ const User = require('../models/user');
 // 1. Lấy danh sách nhân viên đang chờ duyệt (isActive: false)
 exports.getPendingUsers = async (req, res) => {
     try {
-        const currentUserRole = req.user.role; // Lấy role của người đang đăng nhập
-        let condition = { isActive: false }; // Mặc định là tìm người chưa kích hoạt
+        const { role, hospitalId } = req.user; // Lấy thông tin người đang duyệt
+        let whereCondition = { isActive: false };
 
         // LOGIC PHÂN QUYỀN:
         // - Nếu là Admin: Xem được hết (cả GSV và NVYT đang chờ)
         // - Nếu là GSV: Chỉ xem được NVYT đang chờ
-        if (currentUserRole === 'gsv') {
-            condition.role = 'nvyt';
+        if (role === 'gsv') {
+            whereCondition.role = 'nvyt';
+        }
+        if (role === 'super_admin') {
+        } else if (role === 'admin_benh_vien') {
+            whereCondition.hospitalId = hospitalId;
+            whereCondition.role = 'nvyt';
+        } else {
+            return res.status(403).json({ message: 'Không đủ quyền hạn!' });
         }
 
         // Lấy danh sách, trừ password ra cho bảo mật
         const users = await User.findAll({
-            where: condition,
+            where: whereCondition,
+            include: [{ model: Hospital, attributes: ['name'] }],
             attributes: { exclude: ['password'] }
         });
 
