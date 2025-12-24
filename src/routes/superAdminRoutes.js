@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const adminController = require('../controllers/adminController');
+const adminController = require('../controllers/superAdminController');
 const { verifyToken, checkPermission } = require('../middlewares/authMiddleware');
 
 // Chỉ super_admin mới được vào
@@ -17,4 +17,6 @@ router.get('/staffs',
         res.json({ message: "Đây là danh sách nhân viên của bạn..." });
     }
 );
+router.get('/hospitals', verifyToken, checkPermission('manage_hospital'), adminController.getAllHospitals);
+router.put('/hospital-status/:hospitalId', verifyToken, checkPermission('manage_hospital'), adminController.toggleHospitalStatus);
 module.exports = router;

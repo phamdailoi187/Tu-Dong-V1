@@ -20,7 +20,10 @@ const Role = sequelize.define('Role', {
         type: DataTypes.STRING
     }
 }, {
-    timestamps: false // Bảng này ít thay đổi, không cần created_at
+    tableName: 'roles', // <--- Thêm dòng này
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
 });
 
 module.exports = Role;

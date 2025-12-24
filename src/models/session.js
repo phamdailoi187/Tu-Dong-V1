@@ -29,8 +29,10 @@ const Session = sequelize.define('Session', {
         defaultValue: false
     }
 }, {
-    timestamps: true, // Tự sinh createdAt (thời gian đăng nhập)
-    tableName: 'user_sessions' // Đặt tên bảng đúng như sơ đồ ông thích
+    tableName: 'user_sessions',
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
 });
 
 module.exports = Session;

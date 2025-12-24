@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Siêu Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="p-4">
+
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>👑 Siêu Admin - Quản Lý Bệnh Viện</h2>
+            <button onclick="logout()" class="btn btn-danger">Đăng Xuất</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-dark text-white">Danh sách Bệnh Viện (Từ Database)</div>
+            <div class="card-body">
+                <button onclick="loadHospitals()" class="btn btn-success mb-3">🔄 Tải Danh Sách</button>
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên Bệnh Viện</th>
+                            <th>Địa chỉ</th>
+                            <th>Admin Đại Diện</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hospitalTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/index.html';
+
+        async function loadHospitals() {
+            try {
+                const res = await fetch('/api/super-admin/hospitals', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    if (res.status === 403) alert('Bạn không có quyền xem!');
+                    return;
+                }
+
+                const tbody = document.getElementById('hospitalTable');
+                tbody.innerHTML = ''; // Xóa cũ
+
+                data.data.forEach(hos => {
+                    // Lấy tên admin đại diện nếu có
+                    const adminName = (hos.Users && hos.Users.length > 0) ? hos.Users[0].username : 'Chưa có';
+
+                    const row = `
+                    <tr>
+                        <td>${hos.id}</td>
+                        <td>${hos.name}</td>
+                        <td>${hos.address}</td>
+                        <td><span class="badge bg-info">${adminName}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-warning">Khóa/Mở</button>
+                        </td>
+                    </tr>
+                `;
+                    tbody.innerHTML += row;
+                });
+            } catch (err) {
+                console.error(err);
+                alert('Lỗi tải dữ liệu');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/index.html';
+        }
+
+        // Tự động tải khi vào trang
+        loadHospitals();
+    </script>
+
+</body>
+
+</html>

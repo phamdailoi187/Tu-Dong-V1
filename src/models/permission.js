@@ -20,6 +20,7 @@ const Permission = sequelize.define('Permission', {
         type: DataTypes.STRING
     }
 }, {
+    tableName: 'permissions',
     timestamps: false
 });
 

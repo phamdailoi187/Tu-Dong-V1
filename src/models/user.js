@@ -48,7 +48,10 @@ const User = sequelize.define('User', {
         // vì đoạn User.belongsTo bên server.js sẽ lo việc liên kết khóa ngoại.
     }
 }, {
-    timestamps: true // Tự động tạo cột createdAt, updatedAt
+    tableName: 'users', // <--- Thêm dòng này
+    timestamps: true,
+    createdAt: 'created_at', // Sửa luôn cho giống hình (nếu muốn)
+    updatedAt: 'updated_at'  // Sửa luôn cho giống hình (nếu muốn)
 });
 
 module.exports = User;
