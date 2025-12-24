@@ -3,66 +3,55 @@ const seedData = require('../config/seeder');
 const Role = require('../models/role');
 const Permission = require('../models/permission');
 const User = require('../models/user');
+const Session = require('../models/session');
 
 const runUpdate = async () => {
     try {
         console.log("🔄 Đang kết nối Database...");
         await connectDB();
 
-        // 1. KHAI BÁO QUAN HỆ
+        // Khai báo lại để script không lỗi
         Role.belongsToMany(Permission, { through: 'role_has_permissions', foreignKey: 'role_id' });
         Permission.belongsToMany(Role, { through: 'role_has_permissions', foreignKey: 'permission_id' });
+        User.hasMany(Session, { foreignKey: 'user_id' }); // <--- Script cũng phải hiểu đúng tên mới
 
-        console.log("🛠 Đang CƯỠNG CHẾ sửa lỗi bảng ROLES...");
+        console.log("🛠 Đang SỬA CỘT userId -> user_id...");
 
         try {
-            // --- XỬ LÝ RIÊNG CHO BẢNG ROLES (Nơi đang bị lỗi) ---
-
-            // Bước 1: Cố gắng đổi tên cột cũ (nếu có)
-            try {
-                await sequelize.query('ALTER TABLE "roles" RENAME COLUMN "createdAt" TO "created_at";');
-                await sequelize.query('ALTER TABLE "roles" RENAME COLUMN "updatedAt" TO "updated_at";');
-            } catch (e) {
-                // Không sao, có thể nó chưa có hoặc đã đổi rồi
-            }
-
-            // Bước 2: NẾU CHƯA CÓ CỘT, TẠO MỚI VÀ ĐIỀN LUÔN DỮ LIỆU (DEFAULT NOW())
-            // Dòng này cực quan trọng: Nó giúp tránh lỗi "contains null values"
-            await sequelize.query('ALTER TABLE "roles" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ DEFAULT NOW();');
-            await sequelize.query('ALTER TABLE "roles" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ DEFAULT NOW();');
-
-            // Bước 3: LẤP ĐẦY DỮ LIỆU CHO CHẮC ĂN
-            await sequelize.query('UPDATE "roles" SET "created_at" = NOW() WHERE "created_at" IS NULL;');
-            await sequelize.query('UPDATE "roles" SET "updated_at" = NOW() WHERE "updated_at" IS NULL;');
-
-            // --- XỬ LÝ CÁC BẢNG KHÁC (USER, PERMISSION...) ---
-            try {
-                await sequelize.query('ALTER TABLE IF EXISTS "Users" RENAME TO "users";');
-                await sequelize.query('ALTER TABLE "users" RENAME COLUMN "createdAt" TO "created_at";');
-                await sequelize.query('ALTER TABLE "users" RENAME COLUMN "updatedAt" TO "updated_at";');
-
-                await sequelize.query('ALTER TABLE IF EXISTS "Permissions" RENAME TO "permissions";');
-                // Permission thường không có timestamps, nhưng nếu có thì thêm lệnh rename ở đây
-
-                await sequelize.query('ALTER TABLE IF EXISTS "RolePermissions" RENAME TO "role_has_permissions";');
-            } catch (e) { /* Bỏ qua lỗi nhỏ */ }
-
-            console.log("✅ Đã xử lý thủ công xong cấu trúc bảng!");
-        } catch (err) {
-            console.log("⚠️ Lỗi SQL thủ công (Có thể bỏ qua nếu bảng đã chuẩn):", err.message);
+            // 1. Cố gắng đổi tên cột userId -> user_id (Nếu cột cũ tên là userId)
+            await sequelize.query('ALTER TABLE "user_sessions" RENAME COLUMN "userId" TO "user_id";');
+            console.log("✅ Đã đổi tên userId thành user_id");
+        } catch (e) {
+            // Nếu lỗi nghĩa là không có cột userId, có thể nó chưa được tạo hoặc đã là user_id rồi
         }
 
-        // 2. ĐỒNG BỘ
-        console.log("🔄 Đang đồng bộ lại (Sequelize)...");
+        // 2. Đảm bảo cột user_id tồn tại
+        await sequelize.query('ALTER TABLE "user_sessions" ADD COLUMN IF NOT EXISTS "user_id" INTEGER;');
+
+        // 3. Quan trọng: Tạo ràng buộc khóa ngoại (Foreign Key) nếu chưa có
+        // Để đảm bảo user_id này trỏ đúng về bảng users(id)
+        try {
+            await sequelize.query(`
+                ALTER TABLE "user_sessions" 
+                ADD CONSTRAINT "fk_user_sessions_user_id" 
+                FOREIGN KEY ("user_id") 
+                REFERENCES "users" ("id") 
+                ON DELETE CASCADE ON UPDATE CASCADE;
+            `);
+        } catch (e) { /* Bỏ qua nếu đã có khóa ngoại */ }
+
+        console.log("✅ Cấu trúc bảng user_sessions đã chuẩn user_id!");
+
+        // Đồng bộ lại
+        console.log("🔄 Đang đồng bộ lại...");
         await sequelize.sync({ alter: true });
 
-        console.log("🚀 Đang kiểm tra dữ liệu mẫu (Seeder)...");
         await seedData();
 
-        console.log("✅ THÀNH CÔNG! Hết lỗi rồi ông ơi.");
+        console.log("🚀 THÀNH CÔNG! Giờ thì đăng nhập được rồi đấy.");
         process.exit(0);
     } catch (error) {
-        console.error("❌ Vẫn lỗi à? Chụp lại gửi tôi nhé:", error);
+        console.error("❌ Lỗi:", error);
         process.exit(1);
     }
 };

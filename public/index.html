@@ -62,20 +62,25 @@
                 // 1. Lưu Token
                 localStorage.setItem('token', data.accessToken);
 
-                // 2. Kiểm tra Role để điều hướng
-                // data.roles là mảng object, ví dụ: [{slug: 'sieu_admin'}, ...]
+                //2. Kiểm tra Role để điều hướng
                 const roles = data.roles.map(r => r.slug);
+
+                // 👇 THÊM DÒNG NÀY ĐỂ SOI XEM DB ĐANG TRẢ VỀ CÁI GÌ
+                console.log("Role nhận được từ Server:", roles);
 
                 msgDiv.className = 'mt-3 text-center text-success';
                 msgDiv.innerText = 'Đăng nhập thành công! Đang chuyển hướng...';
 
                 setTimeout(() => {
-                    if (roles.includes('sieu_admin')) {
+                    // 👇 SỬA ĐOẠN IF NÀY: Chấp nhận cả 'sieu_admin' VÀ 'super_admin'
+                    if (roles.includes('sieu_admin') || roles.includes('super_admin')) {
                         window.location.href = '/super-admin.html';
-                    } else if (roles.includes('admin_bv')) {
+                    }
+                    else if (roles.includes('admin_bv') || roles.includes('hospital_admin')) {
                         window.location.href = '/hospital-admin.html';
-                    } else {
-                        alert('Role này chưa có giao diện demo!');
+                    }
+                    else {
+                        alert('Role hiện tại: ' + roles.join(', ') + '\nChưa được cấu hình trang demo!');
                     }
                 }, 1000);
 

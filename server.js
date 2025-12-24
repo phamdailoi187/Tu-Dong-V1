@@ -45,8 +45,8 @@ Role.belongsToMany(Permission, { through: 'role_has_permissions', foreignKey: 'r
 Permission.belongsToMany(Role, { through: 'role_has_permissions', foreignKey: 'permission_id' });
 
 // D. User - Session
-User.hasMany(Session, { foreignKey: 'userId' });
-Session.belongsTo(User, { foreignKey: 'userId' });
+User.hasMany(Session, { foreignKey: 'user_id' });
+Session.belongsTo(User, { foreignKey: 'user_id' });
 
 // --- 5. ĐĂNG KÝ ROUTES ---
 app.use('/api/auth', authRoutes);
