@@ -1,114 +1,182 @@
 const User = require('../models/user');
 const Role = require('../models/role');
-const Session = require('../models/session'); // <--- Import Session
+const Session = require('../models/session');
+const Hospital = require('../models/hospital');
+const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
-// 1. Đăng Ký
+/* 1. Đăng Ký
 exports.register = async (req, res) => {
     try {
-        const { username, password, email, fullName, employeeCode, phoneNumber, hospitalId } = req.body;
+        const { username, email, password } = req.body;
 
-        if (!hospitalId) {
-            return res.status(400).json({ message: 'Vui lòng chọn Bệnh viện công tác!' });
+        // 1. Validate
+        if (!username || !email || !password) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Vui lòng nhập đầy đủ thông tin.' 
+            });
         }
-        const hospitalExists = await Hospital.findByPk(hospitalId);
-        if (!hospitalExists) {
-            return res.status(404).json({ message: 'Bệnh viện không tồn tại!' });
-        }
-        // Check trùng tên hoặc email
-        const existingUser = await User.findOne({
-            where: {
-                [Op.or]: [{ username }, { email }]
-            }
-        });
 
+        // 2. Check user tồn tại
+        const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: 'Tên đăng nhập hoặc Email đã tồn tại!' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email đã tồn tại.' 
+            });
         }
 
-        // Mã hóa pass
+        // 3. Hash password TẠI ĐÂY
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newUser = await User.create({
+        // 4. Tạo user với password ĐÃ hash
+        const newUser = new User({
             username,
             email,
-            password: hashedPassword,
-            fullName,
-            employeeCode,
-            phoneNumber,
-            hospitalId,
-            role: 'medical_staff', // <--- HARDCODE CỨNG: Mày là ai tao không cần biết, đăng ký ở đây thì chỉ là staff thôi.
-            isActive: false        // <--- Chờ duyệt
+            password: hashedPassword // Lưu chuỗi đã mã hóa
         });
 
-        res.status(201).json({
-            message: 'Đăng ký thành công! Vui lòng chờ cấp trên phê duyệt tài khoản.',
-            user: newUser.username
+        await newUser.save();
+
+        // 5. Phản hồi
+        return res.status(201).json({
+            success: true,
+            message: 'Đăng ký thành công',
+            data: { username: newUser.username, email: newUser.email }
         });
+
     } catch (error) {
-        res.status(500).json({ message: 'Lỗi server', error: error.message });
+        console.error(error);
+        return res.status(500).json({ 
+            success: false, 
+            message: 'Lỗi server.' 
+        });
     }
-};
+};*/
+
 // 2. Đăng Nhập
 exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        // 1. Tìm User + Kèm theo Role của họ
         const user = await User.findOne({
             where: { username },
             include: [{
                 model: Role,
-                attributes: ['slug'], // Chỉ lấy cái tên code (vd: sieu_admin)
-                through: { attributes: [] } // Ẩn bảng trung gian cho gọn
+                attributes: ['slug', 'name'],
+                through: { attributes: [] }
             }]
         });
 
-        // Check user tồn tại và đã kích hoạt
         if (!user) return res.status(404).json({ message: 'Tài khoản không tồn tại!' });
-        if (!user.isActive) return res.status(403).json({ message: 'Tài khoản chưa được kích hoạt!' });
 
-        // 2. Check Mật khẩu
-        const validPass = await bcrypt.compare(password, user.password);
+        if (!user.isActive) return res.status(403).json({ message: 'Tài khoản chưa được kích hoạt bởi Admin!' });
+
+        const validPass = await bcrypt.compare(password, user.password_hash);
         if (!validPass) return res.status(400).json({ message: 'Sai mật khẩu!' });
 
-        // 3. Lấy danh sách Role ra mảng (Ví dụ: ['sieu_admin'])
         const roles = user.Roles ? user.Roles.map(r => r.slug) : [];
 
-        // 4. Tạo Access Token (Vé vào cửa ngắn hạn - 1 tiếng)
         const accessToken = jwt.sign(
             { id: user.id, roles: roles, hospitalId: user.hospitalId },
-            process.env.JWT_SECRET || 'secret_key',
-            { expiresIn: '1h' }
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
         );
 
-        // 5. TẠO SESSION (Lưu vết đăng nhập)
-        const refreshToken = crypto.randomBytes(64).toString('hex'); // Vé dài hạn
+        const refreshToken = crypto.randomBytes(64).toString('hex');
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7); // Hết hạn sau 7 ngày
+        expiresAt.setDate(expiresAt.getDate() + 7);
 
         await Session.create({
-            userId: user.id,
+            user_id: user.id,
             refreshToken: refreshToken,
             deviceInfo: req.headers['user-agent'] || 'Unknown',
             ipAddress: req.ip || req.connection.remoteAddress,
             expiresAt: expiresAt
         });
 
-        // 6. Trả kết quả về cho Client
+        // 6. Trả kết quả
         res.json({
             message: 'Đăng nhập thành công!',
             accessToken,
             refreshToken,
             username: user.username,
-            roles: roles
+            roles: user.Roles
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("Lỗi đăng nhập:", error);
         res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+};
+
+// 3. Gửi link quên mật khẩu (Forgot Password)
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ where: { email } });
+
+        if (!user) {
+            return res.status(404).json({ message: 'Email này chưa đăng ký!' });
+        }
+
+        // 1. Tạo token ngẫu nhiên
+        const token = crypto.randomBytes(20).toString('hex');
+
+        // 2. Lưu token và thời hạn (1 tiếng) vào DB
+        user.resetPasswordToken = token;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 giờ
+        await user.save();
+
+        // 3. Giả lập gửi Email
+        // Sau này thay đoạn này bằng nodemailer để gửi mail thật
+        const resetLink = `http://localhost:8080/reset-password.html?token=${token}`;
+
+        console.log("========================================");
+        console.log("📧 EMAIL GỬI TỚI:", user.email);
+        console.log("🔗 LINK RESET PASS:", resetLink);
+        console.log("========================================");
+
+        res.json({ message: 'Đã gửi link khôi phục mật khẩu (Check Console Server nhé!)' });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        console.log("Đang reset pass cho token:", token);
+        const user = await User.findOne({
+            where: {
+                resetPasswordToken: token,
+                resetPasswordExpires: { [Op.gt]: Date.now() }
+            }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Token không hợp lệ hoặc đã hết hạn.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        user.password_hash = await bcrypt.hash(password, salt);
+
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+
+        await user.save();
+
+        return res.json({ message: 'Đổi mật khẩu thành công!' });
+
+    } catch (error) {
+        console.error("❌ LỖI RESET PASS:", error);
+        return res.status(500).json({ message: 'Lỗi server: ' + error.message });
     }
 };

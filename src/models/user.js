@@ -1,57 +1,38 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db'); // Lấy cái kết nối tạo trong file db.js
+const { sequelize } = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 const User = sequelize.define('User', {
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
-    },
-    email: {
-        type: DataTypes.STRING,
-        allowNull: false, // Bắt buộc phải có
-        unique: true,     // Không được trùng email
-        validate: {
-            isEmail: true // Bắt buộc phải đúng định dạng a@b.c
-        }
-    },
-    username: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true // Không được trùng tên
-    },
-    password: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    // 1. THÊM THÔNG TIN ĐỊNH DANH CAO
-    fullName: {
-        type: DataTypes.STRING,
-        allowNull: false // Bắt buộc phải có tên thật
-    },
-    employeeCode: {
-        type: DataTypes.STRING,
-        allowNull: true // Mã nhân viên (có thể bổ sung sau)
-    },
-    phoneNumber: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    isActive: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false // Mặc định tạo xong là BỊ KHÓA, chờ duyệt  mới kích hoạt
-    },
-    hospitalId: {
-        type: DataTypes.INTEGER,
-        allowNull: true // Super Admin thì không có bệnh viện -> Null
-        // Không cần khai báo references ở đây cũng được, 
-        // vì đoạn User.belongsTo bên server.js sẽ lo việc liên kết khóa ngoại.
-    }
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    email: { type: DataTypes.STRING, allowNull: false, unique: true, validate: { isEmail: true } },
+    username: { type: DataTypes.STRING, allowNull: false, unique: true },
+    password_hash: { type: DataTypes.STRING, allowNull: false },
+    fullName: { type: DataTypes.STRING, allowNull: false },
+    employeeCode: { type: DataTypes.STRING, allowNull: true },
+    phoneNumber: { type: DataTypes.STRING, allowNull: true },
+    isActive: { type: DataTypes.BOOLEAN, defaultValue: false },
+    hospitalId: { type: DataTypes.INTEGER, allowNull: true },
+    resetPasswordToken: { type: DataTypes.STRING, allowNull: true },
+    resetPasswordExpires: { type: DataTypes.DATE, allowNull: true }
 }, {
-    tableName: 'users', // <--- Thêm dòng này
+    tableName: 'users',
     timestamps: true,
-    createdAt: 'created_at', // Sửa luôn cho giống hình (nếu muốn)
-    updatedAt: 'updated_at'  // Sửa luôn cho giống hình (nếu muốn)
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    /*hooks: {
+        beforeCreate: async (user) => {
+            if (user.password_hash) {
+                const salt = await bcrypt.genSalt(10);
+                user.password_hash = await bcrypt.hash(user.password_hash, salt);
+            }
+        },
+        beforeUpdate: async (user) => {
+            if (user.changed('password_hash')) {
+                const salt = await bcrypt.genSalt(10);
+                user.password_hash = await bcrypt.hash(user.password_hash, salt);
+            }
+        }
+    }*/
 });
 
 module.exports = User;

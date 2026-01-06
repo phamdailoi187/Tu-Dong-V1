@@ -2,73 +2,77 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const Role = require('../models/role');
 const Permission = require('../models/permission');
-// 1. Xác thực Token
-exports.verifyToken = (req, res, next) => {
-    const token = req.header('Authorization')?.split(' ')[1];
-    if (!token) return res.status(401).json({ message: 'Chưa đăng nhập (Thiếu Token)!' });
 
+exports.verifyToken = async (req, res, next) => {
     try {
-        const verified = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
-        req.user = verified; // { id, roles: ['...'], hospitalId }
+        const token = req.header('Authorization')?.replace('Bearer ', '');
+        if (!token) { return res.status(401).json({ message: 'Vui lòng đăng nhập (Thiếu Token)!' }); }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findByPk(decoded.id, {
+            include: [{
+                model: Role,
+                include: [Permission]
+            }]
+        });
+
+        // 3. Kiểm tra user còn tồn tại hoặc còn active không
+        if (!user || !user.isActive) {
+            return res.status(401).json({ message: 'Tài khoản không tồn tại hoặc đã bị khóa!' });
+        }
+
+        // 4. Gán User vào request để các hàm sau dùng luôn
+        req.user = user;
+
         next();
     } catch (err) {
-        res.status(400).json({ message: 'Token không hợp lệ hoặc đã hết hạn!' });
+        console.error("Lỗi Auth:", err.message);
+        res.status(401).json({ message: 'Token không hợp lệ hoặc đã hết hạn!' });
     }
 };
 
-// 2. Check Quyền (Logic mới: So sánh mảng)
-exports.checkRole = (allowedRoles) => { // allowedRoles ví dụ: ['sieu_admin', 'admin_bv']
+exports.checkPermission = (requiredPermissionSlug) => {
     return (req, res, next) => {
-        const userRoles = req.user.roles || [];
+        try {
+            const user = req.user;
 
-        // Kiểm tra xem user có ít nhất 1 role cho phép không
-        const hasPermission = userRoles.some(role => allowedRoles.includes(role));
+            if (!user) return res.status(403).json({ message: 'Chưa xác thực!' });
+            let userPermissions = [];
+            if (user.Roles) {
+                user.Roles.forEach(role => {
+                    if (role.Permissions) {
+                        role.Permissions.forEach(permission => {
+                            userPermissions.push(permission.slug);
+                        });
+                    }
+                });
+            }
+            const MASTER_PERMISSIONS = ['manage_system', 'manage_hospital', 'manage_account'];
+            const hasMasterPermission = MASTER_PERMISSIONS.some(masterSlug => userPermissions.includes(masterSlug));
+            if (hasMasterPermission) { return next(); }
+            if (userPermissions.includes(requiredPermissionSlug)) { return next(); }
+            return res.status(403).json({
+                message: '⛔ Bạn không có quyền thực hiện hành động này!',
+                missing_permission: requiredPermissionSlug
+            });
 
-        if (!hasPermission) {
-            return res.status(403).json({ message: '⛔ Bạn không có quyền thực hiện hành động này!' });
+        } catch (error) {
+            console.error("Lỗi check quyền:", error);
+            res.status(500).json({ message: 'Lỗi server khi kiểm tra quyền' });
         }
-        next();
     };
 };
 
-//3. Check Permission (Dựa trên DB)
-exports.checkPermission = (requiredPermission) => {
-    return async (req, res, next) => {
-        try {
-            // req.user.id có được từ hàm verifyToken ở trên
-            const userId = req.user.id;
+exports.checkRole = (allowedRoleSlugs) => {
+    return (req, res, next) => {
+        const user = req.user;
+        const userRoles = user.Roles.map(r => r.slug);
 
-            // 1. Tìm User và nạp tất cả Role + Permission của họ lên
-            const user = await User.findByPk(userId, {
-                include: [{
-                    model: Role,
-                    include: [Permission] // Lấy luôn Permission bên trong Role
-                }]
-            });
+        const hasRole = userRoles.some(slug => allowedRoleSlugs.includes(slug));
 
-            if (!user) return res.status(403).json({ message: 'User không tồn tại!' });
-
-            // 2. Gom tất cả quyền của user vào 1 mảng duy nhất
-            // Ví dụ user có 2 role, mỗi role có 3 quyền -> gộp lại thành mảng to
-            let allPermissions = [];
-            user.Roles.forEach(role => {
-                role.Permissions.forEach(perm => {
-                    allPermissions.push(perm.slug);
-                });
-            });
-
-            // 3. Kiểm tra xem có quyền yêu cầu không
-            if (allPermissions.includes(requiredPermission)) {
-                next(); // Có quyền -> Cho qua
-            } else {
-                res.status(403).json({
-                    message: '⛔ Bạn không có quyền thực hiện hành động này (Thiếu permission)!',
-                    missing: requiredPermission // Báo luôn là thiếu cái gì cho dễ debug
-                });
-            }
-
-        } catch (error) {
-            res.status(500).json({ message: 'Lỗi kiểm tra quyền', error: error.message });
+        if (hasRole) {
+            next();
+        } else {
+            res.status(403).json({ message: '⛔ Sai vai trò (Role)!' });
         }
     };
 };

@@ -3,139 +3,590 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản Lý Bệnh Viện</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Bệnh Viện Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+        }
+
+        .permission-item {
+            min-width: 220px;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #0d6efd !important;
+            border-bottom: 3px solid #0d6efd;
+            background-color: transparent;
+        }
+
+        .nav-link {
+            color: #6c757d;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+        }
+
+        .table thead th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+    </style>
 </head>
 
-<body class="p-4 bg-light">
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#"><i class="fas fa-hospital-alt me-2"></i>Quản Trị Bệnh Viện</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <div class="d-flex align-items-center">
+                    <span class="navbar-text text-white me-3 fw-bold" id="welcomeMsg">
+                        <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                    </span>
+                    <button onclick="openProfileModal()"
+                        class="btn btn-light btn-sm me-2 text-primary fw-bold shadow-sm">
+                        <i class="fas fa-user-circle"></i> Hồ sơ
+                    </button>
+                    <button onclick="logout()" class="btn btn-danger btn-sm fw-bold shadow-sm">
+                        <i class="fas fa-sign-out-alt"></i> Thoát
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="text-primary">🏥 Admin Bệnh Viện Dashboard</h2>
-            <button onclick="logout()" class="btn btn-danger">Đăng Xuất</button>
-        </div>
+        <ul class="nav nav-tabs mb-4 bg-white rounded shadow-sm px-3 pt-2" id="myTab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active fw-bold py-3" id="staff-tab" data-bs-toggle="tab"
+                    data-bs-target="#staff-pane">
+                    <i class="fas fa-user-nurse me-2"></i>Quản lý Nhân viên
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold py-3" id="role-tab" data-bs-toggle="tab" data-bs-target="#role-pane">
+                    <i class="fas fa-user-shield me-2"></i>Quản lý Chức vụ
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold py-3 text-warning" id="pending-tab" data-bs-toggle="tab"
+                    data-bs-target="#pending-pane" onclick="loadPendingUsers()">
+                    <i class="fas fa-user-clock me-2"></i>Duyệt Đăng Ký
+                </button>
+            </li>
+        </ul>
 
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">➕ Tạo Nhân Viên Y Tế Mới</div>
-                    <div class="card-body">
-                        <form id="createStaffForm">
-                            <div class="mb-2">
-                                <label>Họ và Tên</label>
-                                <input type="text" id="fullName" class="form-control" required>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="staff-pane">
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-success text-white fw-bold"><i class="fas fa-plus-circle"></i>
+                                Thêm Nhân Viên Mới</div>
+                            <div class="card-body">
+                                <form id="createStaffForm">
+                                    <div class="mb-3"><label class="small fw-bold text-muted">Họ và Tên</label><input
+                                            type="text" id="fullName" class="form-control" required></div>
+                                    <div class="mb-3"><label class="small fw-bold text-muted">Email (*)</label><input
+                                            type="email" id="nvEmail" class="form-control" required></div>
+                                    <div class="mb-3"><label class="small fw-bold text-muted">Username</label><input
+                                            type="text" id="nvUsername" class="form-control" required></div>
+                                    <div class="mb-3"><label class="small fw-bold text-muted">Password</label><input
+                                            type="password" id="nvPassword" class="form-control" required></div>
+                                    <div class="mb-3"><label class="small fw-bold text-primary">Chức vụ</label><select
+                                            id="roleSelect" class="form-select border-primary">
+                                            <option value="">Loading...</option>
+                                        </select></div>
+                                    <button type="submit" class="btn btn-success w-100 fw-bold"><i
+                                            class="fas fa-save"></i> Tạo Nhân Viên</button>
+                                </form>
                             </div>
-                            <div class="mb-2">
-                                <label>Tên đăng nhập</label>
-                                <input type="text" id="nvUsername" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-list"></i> Danh Sách Nhân Viên</span>
+                                <button onclick="loadStaffs()" class="btn btn-sm btn-outline-secondary"><i
+                                        class="fas fa-sync-alt"></i> Làm mới</button>
                             </div>
-                            <div class="mb-3">
-                                <label>Mật khẩu</label>
-                                <input type="password" id="nvPassword" class="form-control" required>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0 align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Họ Tên</th>
+                                                <th>Username</th>
+                                                <th>Chức vụ</th>
+                                                <th>Trạng thái</th>
+                                                <th class="text-center">Hành động</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="staffTable">
+                                            <tr>
+                                                <td colspan="6" class="text-center py-3">Đang tải...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">Tạo Ngay</button>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-8">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-success text-white">👨‍⚕️ Danh Sách Nhân Viên Y Tế (Của Viện Mình)</div>
-                    <div class="card-body">
-                        <button onclick="loadStaffs()" class="btn btn-sm btn-outline-secondary mb-3">🔄 Làm mới danh
-                            sách</button>
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Họ Tên</th>
-                                    <th>Username</th>
-                                    <th>Trạng thái</th>
-                                    <th>Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody id="staffTable">
-                            </tbody>
-                        </table>
+            <div class="tab-pane fade" id="role-pane">
+                <div class="row">
+                    <div class="col-md-12 mb-4">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-primary text-white fw-bold"><i class="fas fa-tools"></i> Tạo Chức
+                                Vụ Mới</div>
+                            <div class="card-body">
+                                <form id="createRoleForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3"><label class="small fw-bold">Tên Chức
+                                                Vụ</label><input type="text" id="roleName" class="form-control"
+                                                required></div>
+                                        <div class="col-md-6 mb-3"><label class="small fw-bold">Mô tả</label><input
+                                                type="text" id="roleDesc" class="form-control"></div>
+                                    </div>
+                                    <label class="small fw-bold text-primary mb-2">Phân quyền:</label>
+                                    <div id="permissionsContainer"
+                                        class="d-flex flex-wrap gap-2 p-3 border rounded bg-light mb-3"
+                                        style="max-height: 200px; overflow-y: auto;">Running...</div>
+                                    <button type="submit" class="btn btn-primary fw-bold">Lưu Chức Vụ</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white fw-bold d-flex justify-content-between">
+                                <span><i class="fas fa-shield-alt"></i> Chức Vụ Hiện Có</span>
+                                <button onclick="loadMyRoles()" class="btn btn-sm btn-outline-secondary"><i
+                                        class="fas fa-sync-alt"></i></button>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-bordered table-striped mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-center">ID</th>
+                                            <th>Tên Chức Vụ</th>
+                                            <th>Slug</th>
+                                            <th>Quyền</th>
+                                            <th class="text-center">Xóa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rolesTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="pending-pane">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-warning text-dark fw-bold d-flex justify-content-between">
+                        <span><i class="fas fa-user-clock"></i> Duyệt Đăng Ký</span>
+                        <button onclick="loadPendingUsers()" class="btn btn-sm btn-light"><i
+                                class="fas fa-sync-alt"></i></button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Họ Tên</th>
+                                        <th>Email</th>
+                                        <th>Username</th>
+                                        <th>Ngày Đăng Ký</th>
+                                        <th class="text-center">Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pendingTable"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-id-card"></i> Hồ sơ cá nhân</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="profileForm">
+                        <div class="bg-light p-3 rounded mb-3 border">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted small fw-bold">ID:</span><span class="fw-bold text-dark"
+                                    id="p_id">---</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted small fw-bold">Mã NV:</span><span class="fw-bold text-primary"
+                                    id="p_code">---</span>
+                            </div>
+                            <div>
+                                <span class="text-muted small fw-bold d-block">Vai trò:</span>
+                                <div id="p_roles">---</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small fw-bold">Username</label>
+                            <input type="text" id="p_username" class="form-control bg-light" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small fw-bold">Họ tên (*)</label>
+                            <input type="text" id="p_fullName" class="form-control" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="small fw-bold">Email</label>
+                                <input type="email" id="p_email" class="form-control">
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold">Số điện thoại</label>
+                                <input type="text" id="p_phone" class="form-control" placeholder="09xx...">
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary fw-bold"><i class="fas fa-save"></i> Cập nhật
+                                hồ sơ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editStaffModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Cập Nhật Chức Vụ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editStaffForm">
+                        <input type="hidden" id="editStaffId">
+                        <div class="mb-3">
+                            <label class="small fw-bold text-muted">Nhân viên</label>
+                            <input type="text" id="editStaffName" class="form-control bg-light" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small fw-bold text-primary">Chọn chức vụ mới</label>
+                            <select id="editRoleSelect" class="form-select"></select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary fw-bold">Lưu Thay Đổi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="detailStaffModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title fw-bold">Hồ Sơ Nhân Viên</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <h5 id="detail_fullName" class="fw-bold text-primary">...</h5>
+                        <div id="detail_role">...</div>
+                    </div>
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between"><b>ID:</b> <span
+                                id="detail_id">---</span></li>
+                        <li class="list-group-item d-flex justify-content-between"><b>Mã NV:</b> <span
+                                id="detail_employeeCode">---</span></li>
+                        <li class="list-group-item d-flex justify-content-between"><b>Username:</b> <span
+                                id="detail_username">---</span></li>
+                        <li class="list-group-item d-flex justify-content-between"><b>Email:</b> <span
+                                id="detail_email">---</span></li>
+                        <li class="list-group-item d-flex justify-content-between"><b>SĐT:</b> <span
+                                id="detail_phone">---</span></li>
+                        <li class="list-group-item d-flex justify-content-between"><b>Ngày tạo:</b> <span
+                                id="detail_createdAt">---</span></li>
+                        <li class="list-group-item d-flex justify-content-between"><b>Trạng thái:</b> <span
+                                id="detail_status">---</span></li>
+                    </ul>
+                </div>
+                <div class="modal-footer p-1">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const token = localStorage.getItem('token');
         if (!token) window.location.href = '/index.html';
 
-        // 1. Hàm tạo nhân viên
-        document.getElementById('createStaffForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const fullName = document.getElementById('fullName').value;
-            const username = document.getElementById('nvUsername').value;
-            const password = document.getElementById('nvPassword').value;
-
+        // --- 1. PROFILE & SYSTEM INIT ---
+        async function loadProfile() {
             try {
-                const res = await fetch('/api/bv-admin/create-nvyt', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ fullName, username, password })
-                });
-
-                const data = await res.json();
+                const res = await fetch('/api/users/profile', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (res.ok) {
-                    alert('✅ ' + data.message);
-                    document.getElementById('createStaffForm').reset();
-                    loadStaffs(); // Tải lại bảng
-                } else {
-                    alert('❌ Lỗi: ' + data.message);
+                    const json = await res.json();
+                    const user = json.user || json.data;
+
+                    document.getElementById('welcomeMsg').innerHTML = `Xin chào, ${user.fullName || user.username}!`;
+
+                    // Fill Info
+                    document.getElementById('p_id').innerText = '#' + user.id;
+                    document.getElementById('p_code').innerText = user.employeeCode || '---';
+                    document.getElementById('p_roles').innerHTML = (user.Roles && user.Roles.length > 0)
+                        ? user.Roles.map(r => `<span class="badge bg-info text-dark me-1">${r.name}</span>`).join('')
+                        : '<span class="text-muted small">Chưa phân quyền</span>';
+
+                    // Fill Form
+                    document.getElementById('p_username').value = user.username;
+                    document.getElementById('p_fullName').value = user.fullName || '';
+                    document.getElementById('p_email').value = user.email || '';
+                    document.getElementById('p_phone').value = user.phoneNumber || '';
                 }
-            } catch (err) {
-                alert('Lỗi kết nối server');
-            }
+            } catch (e) { console.error(e); }
+        }
+
+        function openProfileModal() { new bootstrap.Modal(document.getElementById('profileModal')).show(); }
+
+        // Xử lý Submit Profile (Duy nhất 1 listener)
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const body = {
+                    fullName: document.getElementById('p_fullName').value,
+                    email: document.getElementById('p_email').value,
+                    phoneNumber: document.getElementById('p_phone').value
+                };
+                const res = await fetch('/api/users/update-profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (res.ok) { alert('✅ Cập nhật thành công!'); loadProfile(); }
+                else { alert('❌ ' + data.message); }
+            } catch (e) { alert('Lỗi server'); }
         });
 
-        // 2. Hàm tải danh sách nhân viên
+        // --- 2. STAFF MANAGEMENT ---
         async function loadStaffs() {
             try {
-                const res = await fetch('/api/bv-admin/list-nvyt', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                const res = await fetch('/api/bv-admin/list-nvyt', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                const tbody = document.getElementById('staffTable');
+                if (!res.ok) { tbody.innerHTML = `<tr class="text-danger"><td colspan="6">${data.message}</td></tr>`; return; }
+
+                let html = '';
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(u => {
+                        const roleName = (u.Roles && u.Roles.length) ? u.Roles[0].name : 'Chưa gán';
+                        const empCode = u.employeeCode ? `<br><small class="text-muted">${u.employeeCode}</small>` : '';
+                        html += `<tr>
+                            <td>#${u.id}</td>
+                            <td><b>${u.fullName}</b>${empCode}</td>
+                            <td>${u.username}</td>
+                            <td>${roleName}</td>
+                            <td>${u.isActive ? 'Hoạt động' : 'Đã khóa'}</td>
+                            <td class="text-center">
+                                <button onclick="viewStaffDetail(${u.id})" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
+                                <button onclick="openEditStaffModal(${u.id})" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></button>
+                                <button onclick="lockUser(${u.id})" class="btn btn-sm ${u.isActive ? 'btn-outline-warning' : 'btn-outline-success'}"><i class="fas ${u.isActive ? 'fa-lock' : 'fa-unlock'}"></i></button>
+                                <button onclick="deleteStaff(${u.id})" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>`;
+                    });
+                    tbody.innerHTML = html;
+                } else tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3">Chưa có nhân viên</td></tr>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function createStaff(e) {
+            e.preventDefault();
+            const body = {
+                fullName: document.getElementById('fullName').value,
+                email: document.getElementById('nvEmail').value,
+                username: document.getElementById('nvUsername').value,
+                password: document.getElementById('nvPassword').value,
+                roleId: document.getElementById('roleSelect').value
+            };
+            try {
+                const res = await fetch('/api/bv-admin/create-nvyt', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(body)
                 });
                 const data = await res.json();
+                if (res.ok) { alert('✅ ' + data.message); document.getElementById('createStaffForm').reset(); loadStaffs(); }
+                else alert('❌ ' + data.message);
+            } catch (e) { alert('Lỗi server'); }
+        }
+        document.getElementById('createStaffForm').addEventListener('submit', createStaff);
 
-                const tbody = document.getElementById('staffTable');
-                tbody.innerHTML = '';
+        // --- VIEW DETAIL (Sử dụng ID mới detail_...) ---
+        async function viewStaffDetail(id) {
+            try {
+                const res = await fetch(`/api/bv-admin/staff/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const json = await res.json();
+                if (res.ok) {
+                    const u = json.data;
+                    const set = (k, v) => document.getElementById(k).innerHTML = v || '<span class="text-muted small">---</span>';
 
-                if (data.data) {
-                    data.data.forEach(u => {
-                        tbody.innerHTML += `
-                        <tr>
-                            <td>${u.id}</td>
-                            <td>${u.fullName}</td>
-                            <td><b>${u.username}</b></td>
-                            <td>${u.isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Locked</span>'}</td>
-                            <td><button class="btn btn-sm btn-danger">Xóa</button></td>
-                        </tr>
-                    `;
-                    });
+                    set('detail_id', '#' + u.id);
+                    set('detail_fullName', u.fullName);
+                    set('detail_username', u.username);
+                    set('detail_email', u.email);
+                    set('detail_phone', u.phoneNumber);
+                    set('detail_employeeCode', u.employeeCode);
+                    set('detail_createdAt', u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '---');
+                    set('detail_role', (u.Roles && u.Roles.length) ? `<span class="badge bg-info text-dark">${u.Roles[0].name}</span>` : 'Chưa gán');
+                    set('detail_status', u.isActive ? '<span class="text-success fw-bold">Hoạt động</span>' : '<span class="text-danger fw-bold">Đã khóa</span>');
+
+                    new bootstrap.Modal(document.getElementById('detailStaffModal')).show();
                 }
-            } catch (err) {
-                console.error(err);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/index.html';
+        // --- EDIT ROLE ---
+        async function openEditStaffModal(id) {
+            try {
+                const res = await fetch(`/api/bv-admin/staff/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                if (res.ok) {
+                    const u = data.data;
+                    document.getElementById('editStaffId').value = u.id;
+                    document.getElementById('editStaffName').value = u.fullName + ` (${u.username})`;
+                    if (u.Roles && u.Roles.length) document.getElementById('editRoleSelect').value = u.Roles[0].id;
+                    new bootstrap.Modal(document.getElementById('editStaffModal')).show();
+                }
+            } catch (e) { console.error(e); }
         }
 
-        // Chạy khi vào trang
+        document.getElementById('editStaffForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editStaffId').value;
+            const roleId = document.getElementById('editRoleSelect').value;
+            try {
+                const res = await fetch(`/api/bv-admin/staff/${id}/role`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ roleId })
+                });
+                if (res.ok) {
+                    alert('✅ Cập nhật thành công');
+                    bootstrap.Modal.getInstance(document.getElementById('editStaffModal')).hide();
+                    loadStaffs();
+                } else alert('Lỗi cập nhật');
+            } catch (e) { alert('Lỗi server'); }
+        });
+
+        // --- LOCK & DELETE ---
+        async function lockUser(id) {
+            if (!confirm('Xác nhận thay đổi trạng thái khóa/mở?')) return;
+            await fetch(`/api/bv-admin/lock/${id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+            loadStaffs();
+        }
+        async function deleteStaff(id) {
+            if (!confirm('Xác nhận XÓA vĩnh viễn?')) return;
+            await fetch(`/api/bv-admin/staff/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            loadStaffs();
+        }
+
+        // --- 3. ROLES MANAGEMENT ---
+        async function loadRolesForDropdown() {
+            const res = await fetch('/api/bv-admin/my-roles', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            const ops = data.data.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            document.getElementById('roleSelect').innerHTML = `<option value="">--Chọn--</option>` + ops;
+            document.getElementById('editRoleSelect').innerHTML = ops;
+
+            // Render Table
+            document.getElementById('rolesTable').innerHTML = data.data.map(r => `
+                <tr>
+                    <td class="text-center">${r.id}</td>
+                    <td class="fw-bold">${r.name}</td>
+                    <td><code>${r.slug}</code></td>
+                    <td><small>${r.Permissions ? r.Permissions.map(p => p.name).join(', ') : ''}</small></td>
+                    <td class="text-center"><button onclick="deleteRole(${r.id})" class="btn btn-sm btn-outline-danger">X</button></td>
+                </tr>`).join('');
+        }
+
+        async function loadPermissionsList() {
+            const res = await fetch('/api/bv-admin/permissions-list', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            document.getElementById('permissionsContainer').innerHTML = data.data.map(p => `
+                <div class="form-check permission-item border rounded px-2 py-1 bg-white">
+                    <input class="form-check-input" type="checkbox" value="${p.id}" id="perm_${p.id}">
+                    <label class="form-check-label small" for="perm_${p.id}">${p.name}</label>
+                </div>`).join('');
+        }
+
+        document.getElementById('createRoleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                name: document.getElementById('roleName').value,
+                description: document.getElementById('roleDesc').value,
+                permissionIds: Array.from(document.querySelectorAll('#permissionsContainer input:checked')).map(c => c.value)
+            };
+            if (!body.permissionIds.length) return alert('Chọn ít nhất 1 quyền');
+            await fetch('/api/bv-admin/create-role', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(body) });
+            alert('✅ Tạo chức vụ thành công'); loadRolesForDropdown();
+        });
+
+        async function deleteRole(id) {
+            if (!confirm('Xóa chức vụ này?')) return;
+            await fetch(`/api/bv-admin/delete-role/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            loadRolesForDropdown();
+        }
+
+        // --- 4. PENDING USERS ---
+        async function loadPendingUsers() {
+            const res = await fetch('/api/bv-admin/pending-users', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            const tbody = document.getElementById('pendingTable');
+            if (data.data && data.data.length) {
+                tbody.innerHTML = data.data.map(u => `
+                    <tr>
+                        <td>${u.id}</td><td>${u.fullName}</td><td>${u.email}</td><td>${u.username}</td>
+                        <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                        <td><button onclick="approveUser(${u.id})" class="btn btn-sm btn-success">Duyệt</button></td>
+                    </tr>`).join('');
+            } else tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3">Không có yêu cầu nào</td></tr>';
+        }
+
+        async function approveUser(id) {
+            if (!confirm('Duyệt người này?')) return;
+            await fetch(`/api/bv-admin/approve/${id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+            loadPendingUsers();
+        }
+
+        function logout() { localStorage.removeItem('token'); window.location.href = '/index.html'; }
+
+        // INIT
+        loadProfile();
+        loadRolesForDropdown();
         loadStaffs();
+        loadPermissionsList();
     </script>
-
 </body>
 
 </html>

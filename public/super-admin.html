@@ -5,88 +5,497 @@
     <meta charset="UTF-8">
     <title>Siêu Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body class="p-4">
+<body class="bg-light p-4">
 
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>👑 Siêu Admin - Quản Lý Bệnh Viện</h2>
-            <button onclick="logout()" class="btn btn-danger">Đăng Xuất</button>
+            <h2 class="text-primary fw-bold"><i class="fas fa-crown text-warning"></i> Siêu Admin - Quản Lý Bệnh Viện
+            </h2>
+            <div>
+                <button onclick="openProfileModal()" class="btn btn-info text-white me-2">
+                    <i class="fas fa-user-cog"></i> Tài khoản
+                </button>
+                <button onclick="logout()" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i> Đăng Xuất
+                </button>
+            </div>
         </div>
 
-        <div class="card">
-            <div class="card-header bg-dark text-white">Danh sách Bệnh Viện (Từ Database)</div>
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold">🏥 Danh sách Bệnh Viện (Từ Database)</span>
+                <div>
+                    <button onclick="loadHospitals()" class="btn btn-sm btn-outline-light me-2"><i
+                            class="fas fa-sync"></i> Tải lại</button>
+                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addHospitalModal">
+                        <i class="fas fa-plus-circle"></i> Thêm Bệnh Viện
+                    </button>
+                </div>
+            </div>
+
             <div class="card-body">
-                <button onclick="loadHospitals()" class="btn btn-success mb-3">🔄 Tải Danh Sách</button>
-                <table class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Tên Bệnh Viện</th>
-                            <th>Địa chỉ</th>
-                            <th>Admin Đại Diện</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody id="hospitalTable">
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Mã BV</th>
+                                <th>Tên Bệnh Viện</th>
+                                <th>Địa chỉ / SĐT</th>
+                                <th style="min-width: 200px;">Admin Đại Diện</th>
+                                <th>Trạng thái</th>
+                                <th class="text-center" style="min-width: 180px;">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hospitalTable">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
+    <div class="modal fade" id="addHospitalModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-hospital-user"></i> Thêm Bệnh Viện & Cấp Admin</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="text-primary border-bottom pb-2 mb-3">1. Thông tin Bệnh viện</h6>
+                    <div class="row g-2">
+                        <div class="col-md-4 mb-2">
+                            <label class="small fw-bold">Mã BV (*)</label>
+                            <input type="text" id="hospitalCode" class="form-control form-control-sm"
+                                placeholder="VD: BV_BM">
+                        </div>
+                        <div class="col-md-8 mb-2">
+                            <label class="small fw-bold">Tên BV (*)</label>
+                            <input type="text" id="hospitalName" class="form-control form-control-sm"
+                                placeholder="VD: Bệnh Viện Bạch Mai">
+                        </div>
+                    </div>
+                    <div class="mb-2"><label class="small">Địa chỉ</label><input type="text" id="address"
+                            class="form-control form-control-sm"></div>
+                    <div class="mb-3"><label class="small">Hotline</label><input type="text" id="phone"
+                            class="form-control form-control-sm"></div>
+
+                    <h6 class="text-danger border-bottom pb-2 mb-3 mt-3">2. Tài khoản Admin Đại Diện</h6>
+                    <div class="mb-2">
+                        <label class="small fw-bold">Username Admin (*)</label>
+                        <input type="text" id="adminUsername" class="form-control form-control-sm">
+                    </div>
+                    <div class="mb-2">
+                        <label class="small fw-bold">Email Admin (*)</label>
+                        <input type="email" id="adminEmail" class="form-control form-control-sm"
+                            placeholder="admin@benhvien.com">
+                    </div>
+                    <div class="mb-2">
+                        <label class="small fw-bold">Mật khẩu (*)</label>
+                        <input type="password" id="adminPassword" class="form-control form-control-sm">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="createHospital()">Tạo Mới Ngay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editHospitalModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-edit"></i> Cập nhật thông tin</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editId">
+                    <div class="mb-2"><label class="fw-bold">Tên Bệnh Viện</label><input type="text" id="editName"
+                            class="form-control"></div>
+                    <div class="mb-2"><label>Địa chỉ</label><input type="text" id="editAddress" class="form-control">
+                    </div>
+                    <div class="mb-3"><label>Số điện thoại</label><input type="text" id="editPhone"
+                            class="form-control"></div>
+                    <hr>
+                    <div class="mb-2 bg-light p-2 border rounded">
+                        <label class="fw-bold text-danger">Đổi mật khẩu Admin</label>
+                        <small class="d-block text-muted mb-1">(Để trống nếu không muốn đổi)</small>
+                        <input type="password" id="editNewPass" class="form-control" placeholder="Nhập mật khẩu mới...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="submitUpdate()">Lưu Thay Đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">👤 Thông tin cá nhân</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Username (Không thể sửa)</label>
+                        <input type="text" id="myUsername" class="form-control" disabled readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label>Họ và tên</label>
+                        <input type="text" id="myFullName" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" id="myEmail" class="form-control">
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3 bg-light p-3 rounded border">
+                        <label class="fw-bold text-danger mb-2">
+                            <i class="bi bi-shield-lock"></i> Đổi mật khẩu
+                        </label>
+
+                        <div class="mb-2">
+                            <input type="password" id="myCurrentPass" class="form-control"
+                                placeholder="Mật khẩu hiện tại (Bắt buộc nếu đổi pass)">
+                        </div>
+
+                        <div>
+                            <input type="password" id="myNewPass" class="form-control"
+                                placeholder="Mật khẩu mới (Bỏ trống nếu không đổi)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" onclick="saveProfile()">Lưu thay đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
         if (!token) window.location.href = '/index.html';
+
+        // --- 1. QUẢN LÝ BỆNH VIỆN ---
 
         async function loadHospitals() {
             try {
-                const res = await fetch('/api/super-admin/hospitals', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
+                const res = await fetch('/api/super-admin/hospitals', { headers: { 'Authorization': `Bearer ${token}` } });
 
+                // Xử lý lỗi 401/403
                 if (!res.ok) {
-                    if (res.status === 403) alert('Bạn không có quyền xem!');
+                    if (res.status === 401 || res.status === 403) {
+                        Swal.fire('Lỗi', 'Hết phiên đăng nhập!', 'error').then(() => logout());
+                    }
                     return;
                 }
 
+                const json = await res.json();
                 const tbody = document.getElementById('hospitalTable');
-                tbody.innerHTML = ''; // Xóa cũ
+                tbody.innerHTML = '';
 
-                data.data.forEach(hos => {
-                    // Lấy tên admin đại diện nếu có
-                    const adminName = (hos.Users && hos.Users.length > 0) ? hos.Users[0].username : 'Chưa có';
+                json.data.forEach(hos => {
+                    // -----------------------------------------------------------
+                    // 👇 1. SỬA LỖI QUAN TRỌNG: Dùng hos.adminInfo thay vì hos.Users
+                    // -----------------------------------------------------------
+                    let adminDisplay = '<span class="text-muted fst-italic opacity-50">Chưa có admin</span>';
+                    const admin = hos.adminInfo; // Lấy đúng biến từ Controller trả về
 
-                    const row = `
-                    <tr>
-                        <td>${hos.id}</td>
-                        <td>${hos.name}</td>
-                        <td>${hos.address}</td>
-                        <td><span class="badge bg-info">${adminName}</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-warning">Khóa/Mở</button>
-                        </td>
-                    </tr>
+                    if (admin) {
+                        // Logic hiển thị Role (Nếu backend trả về Roles)
+                        // Lưu ý: Controller bạn để attributes: [] ở Role nên có thể admin.Roles sẽ rỗng. 
+                        // Tạm thời mình lấy tên mặc định nếu không có role.
+                        const roleName = (admin.Roles && admin.Roles.length > 0) ? admin.Roles[0].name : 'Quản trị viên';
+
+                        // Logic Permissions
+                        const perms = (admin.Roles && admin.Roles.length > 0 && admin.Roles[0].Permissions)
+                            ? admin.Roles[0].Permissions.map(p => p.name)
+                            : [];
+
+                        // Escape chuỗi JSON để tránh lỗi HTML
+                        const permsData = JSON.stringify(perms).replace(/"/g, '&quot;');
+
+                        adminDisplay = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div style="line-height: 1.2;">
+                            <span class="fw-bold text-dark">${admin.fullName || admin.username}</span><br>
+                            <small class="text-muted" style="font-size: 0.85em;">${admin.email}</small>
+                        </div>
+                        
+                        ${perms.length > 0 ? `
+                        <button onclick="showPermissions('${admin.username}', '${roleName}', ${permsData})" class="btn btn-sm btn-light text-secondary border-0 ms-2" title="Xem quyền hạn">
+                            <i class="fas fa-shield-alt"></i>
+                        </button>` : ''}
+                    </div>
                 `;
+                    }
+
+                    // -----------------------------------------------------------
+                    // 2. Nút Trạng thái (Giữ nguyên logic của bạn)
+                    // -----------------------------------------------------------
+                    const isActive = (hos.isActive !== undefined) ? hos.isActive : true;
+                    const statusBadge = isActive
+                        ? '<span class="badge bg-success">Hoạt động</span>'
+                        : '<span class="badge bg-danger">Đã khóa</span>';
+
+                    const statusBtn = isActive
+                        ? `<button onclick="toggleStatus(${hos.id}, false)" class="btn btn-sm btn-outline-warning" title="Khóa BV"><i class="fas fa-lock"></i></button>`
+                        : `<button onclick="toggleStatus(${hos.id}, true)" class="btn btn-sm btn-outline-success" title="Mở khóa BV"><i class="fas fa-lock-open"></i></button>`;
+
+                    // -----------------------------------------------------------
+                    // 3. Render Hàng
+                    // -----------------------------------------------------------
+                    const row = `
+                <tr>
+                    <td class="text-center fw-bold text-secondary">${hos.id}</td>
+                    <td><span class="badge bg-light text-dark border">${hos.code || '---'}</span></td>
+                    <td class="fw-bold text-primary">${hos.name}</td>
+                    <td>
+                        <div class="small"><i class="fas fa-map-marker-alt text-secondary me-1"></i> ${hos.address || '-'}</div>
+                        <div class="small mt-1"><i class="fas fa-phone text-secondary me-1"></i> ${hos.phone || '-'}</div>
+                    </td>
+                    
+                    <td>${adminDisplay}</td>
+                    
+                    <td class="text-center">${statusBadge}</td>
+                    
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <button onclick="openEditModal(${hos.id}, '${hos.name}', '${hos.address || ''}', '${hos.phone || ''}')" class="btn btn-sm btn-outline-primary" title="Sửa"><i class="fas fa-edit"></i></button>
+                            ${statusBtn}
+                            <button onclick="deleteHospital(${hos.id})" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `;
                     tbody.innerHTML += row;
                 });
-            } catch (err) {
-                console.error(err);
-                alert('Lỗi tải dữ liệu');
+            } catch (err) { console.error("Lỗi loadHospitals:", err); }
+        }
+
+        async function createHospital() {
+            const data = {
+                hospitalCode: document.getElementById('hospitalCode').value,
+                hospitalName: document.getElementById('hospitalName').value,
+                address: document.getElementById('address').value,
+                phone: document.getElementById('phone').value,
+                adminUsername: document.getElementById('adminUsername').value,
+                adminEmail: document.getElementById('adminEmail').value,
+                adminPassword: document.getElementById('adminPassword').value
+            };
+            if (!data.hospitalCode || !data.hospitalName || !data.adminUsername || !data.adminPassword || !data.adminEmail) {
+                return Swal.fire('Thiếu thông tin', 'Nhập đủ các trường (*)', 'warning');
+            }
+            try {
+                const res = await fetch('/api/super-admin/create-hospital', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) {
+                    Swal.fire('Thành công', 'Đã tạo xong!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addHospitalModal')).hide();
+                    loadHospitals();
+                } else {
+                    Swal.fire('Lỗi', (await res.json()).message, 'error');
+                }
+            } catch (e) { Swal.fire('Lỗi', 'Lỗi kết nối', 'error'); }
+        }
+
+        async function deleteHospital(id) {
+            const token = localStorage.getItem('token');
+            const result = await Swal.fire({
+                title: 'Xóa vĩnh viễn?', text: "Hành động này sẽ xóa Bệnh viện và cả Admin của viện đó!", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Xóa luôn'
+            });
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`/api/super-admin/hospitals/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                    if (res.ok) { Swal.fire('Đã xóa', '', 'success'); loadHospitals(); }
+                    else Swal.fire('Lỗi', 'Không xóa được', 'error');
+                } catch (e) { Swal.fire('Lỗi', 'Lỗi kết nối', 'error'); }
             }
         }
 
-        function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/index.html';
+        // Khóa/Mở khóa Bệnh viện
+        async function toggleStatus(id, currentStatus) {
+            try {
+                // 👇 THÊM DÒNG NÀY: Lấy token để gửi lên server
+                const token = localStorage.getItem('token');
+
+                const res = await fetch(`/api/super-admin/hospital-status/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ isActive: currentStatus })
+                });
+
+                if (res.ok) {
+                    // Thông báo thành công rồi mới load lại
+                    Swal.fire('Thành công', 'Đã cập nhật trạng thái!', 'success');
+                    loadHospitals();
+                } else {
+                    const data = await res.json();
+                    Swal.fire('Lỗi', data.message || 'Không thể cập nhật', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Lỗi', 'Lỗi kết nối server', 'error');
+            }
+        }
+        // --- 2. CHỨC NĂNG SỬA BỆNH VIỆN ---
+        function openEditModal(id, name, address, phone) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editName').value = name;
+            document.getElementById('editAddress').value = address;
+            document.getElementById('editPhone').value = phone;
+            document.getElementById('editNewPass').value = '';
+            new bootstrap.Modal(document.getElementById('editHospitalModal')).show();
         }
 
-        // Tự động tải khi vào trang
+        async function submitUpdate() {
+            const id = document.getElementById('editId').value;
+            const data = {
+                name: document.getElementById('editName').value,
+                address: document.getElementById('editAddress').value,
+                phone: document.getElementById('editPhone').value,
+                newPassword: document.getElementById('editNewPass').value
+            };
+            try {
+                const res = await fetch(`/api/super-admin/hospitals/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) {
+                    Swal.fire('Thành công', 'Cập nhật thành công', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editHospitalModal')).hide();
+                    loadHospitals();
+                } else Swal.fire('Lỗi', (await res.json()).message, 'error');
+            } catch (e) { Swal.fire('Lỗi', 'Lỗi kết nối', 'error'); }
+        }
+
+        // --- 3. CHỨC NĂNG PROFILE (TÀI KHOẢN CỦA MÌNH) ---
+        async function openProfileModal() {
+            try {
+                const res = await fetch('/api/users/profile', { headers: { 'Authorization': `Bearer ${token}` } }); // Dùng đúng endpoint userController
+                const json = await res.json();
+                if (res.ok) {
+                    const user = json.user; // Chú ý: Backend userController trả về { user: ... }
+                    document.getElementById('myUsername').value = user.username;
+                    document.getElementById('myFullName').value = user.fullName || '';
+                    document.getElementById('myEmail').value = user.email || '';
+                    document.getElementById('myNewPass').value = '';
+                    new bootstrap.Modal(document.getElementById('profileModal')).show();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function saveProfile() {
+            // 1. Lấy dữ liệu từ ô nhập
+            const fullName = document.getElementById('myFullName').value;
+            const email = document.getElementById('myEmail').value;
+            const newPass = document.getElementById('myNewPass').value;
+
+            // Lấy token (đảm bảo biến token đã được khai báo hoặc lấy từ localStorage)
+            const token = localStorage.getItem('token');
+
+            // Yêu cầu nhập pass cũ để bảo mật (Optional: nếu backend không bắt buộc thì có thể bỏ)
+            // Nhưng hiện tại bạn đang dùng prompt, nên cứ giữ nguyên
+            const currentPass = prompt("Nhập mật khẩu HIỆN TẠI để xác nhận thay đổi:");
+            if (!currentPass) return; // Nếu bấm hủy thì dừng lại
+
+            try {
+                // --- BƯỚC 1: CẬP NHẬT THÔNG TIN CÁ NHÂN ---
+                // Gán kết quả vào biến resInfo để kiểm tra
+                const resInfo = await fetch('/api/users/update-profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ fullName, email })
+                });
+
+                // 👇 ĐÂY LÀ CHỖ QUAN TRỌNG BẠN THIẾU 👇
+                if (!resInfo.ok) {
+                    const errData = await resInfo.json();
+                    throw new Error(errData.message || 'Lỗi cập nhật hồ sơ');
+                }
+
+                // --- BƯỚC 2: ĐỔI MẬT KHẨU (NẾU CÓ NHẬP) ---
+                if (newPass && newPass.trim() !== '') {
+                    const resPass = await fetch('/api/users/change-password', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            currentPassword: currentPass,
+                            newPassword: newPass
+                        })
+                    });
+
+                    if (!resPass.ok) {
+                        const errPass = await resPass.json();
+                        throw new Error(errPass.message || 'Lỗi đổi mật khẩu');
+                    }
+                }
+
+                // Nếu chạy đến đây nghĩa là không có lỗi nào
+                Swal.fire('Thành công', 'Đã cập nhật hồ sơ & mật khẩu!', 'success');
+
+                // Đóng modal sau khi lưu thành công
+                const modalEl = document.getElementById('profileModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+
+                // (Tùy chọn) Reload lại trang để cập nhật tên hiển thị ở góc
+                // location.reload();
+
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Thất bại', e.message || 'Lỗi kết nối server', 'error');
+            }
+        }
+
+        // --- 4. TIỆN ÍCH XEM QUYỀN ---
+        function showPermissions(username, role, permissions) {
+            let htmlList = permissions.length === 0 ? '<p class="text-danger">Chưa có quyền cụ thể</p>' : '<ul class="text-start">';
+            permissions.forEach(p => htmlList += `<li>${p}</li>`);
+            if (permissions.length > 0) htmlList += '</ul>';
+
+            Swal.fire({
+                title: `Admin: ${username}`,
+                html: `<p>Vai trò: <strong>${role}</strong></p><hr>${htmlList}`,
+                icon: 'info'
+            });
+        }
+
+        function logout() { localStorage.clear(); window.location.href = '/index.html'; }
+
         loadHospitals();
     </script>
-
 </body>
 
 </html>
