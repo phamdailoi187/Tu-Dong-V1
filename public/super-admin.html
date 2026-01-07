@@ -159,6 +159,14 @@
                         <label>Email</label>
                         <input type="email" id="myEmail" class="form-control">
                     </div>
+                    <div class="mb-3">
+                        <label>Mã nhân viên</label>
+                        <input type="text" id="myEmployeeCode" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>Số điện thoại</label>
+                        <input type="text" id="myPhoneNumber" class="form-control">
+                    </div>
 
                     <hr>
 
@@ -172,9 +180,14 @@
                                 placeholder="Mật khẩu hiện tại (Bắt buộc nếu đổi pass)">
                         </div>
 
-                        <div>
+                        <div class="mb-2">
                             <input type="password" id="myNewPass" class="form-control"
                                 placeholder="Mật khẩu mới (Bỏ trống nếu không đổi)">
+                        </div>
+
+                        <div>
+                            <input type="password" id="myConfirmPass" class="form-control"
+                                placeholder="Xác nhận mật khẩu mới">
                         </div>
                     </div>
                 </div>
@@ -404,7 +417,10 @@
                     document.getElementById('myUsername').value = user.username;
                     document.getElementById('myFullName').value = user.fullName || '';
                     document.getElementById('myEmail').value = user.email || '';
+                    document.getElementById('myEmployeeCode').value = user.employeeCode || '';
+                    document.getElementById('myPhoneNumber').value = user.phoneNumber || '';
                     document.getElementById('myNewPass').value = '';
+                    document.getElementById('myConfirmPass').value = '';
                     new bootstrap.Modal(document.getElementById('profileModal')).show();
                 }
             } catch (e) { console.error(e); }
@@ -414,7 +430,18 @@
             // 1. Lấy dữ liệu từ ô nhập
             const fullName = document.getElementById('myFullName').value;
             const email = document.getElementById('myEmail').value;
+            const employeeCode = document.getElementById('myEmployeeCode').value;
+            const phoneNumber = document.getElementById('myPhoneNumber').value;
             const newPass = document.getElementById('myNewPass').value;
+            const confirmPass = document.getElementById('myConfirmPass').value;
+
+            // Validate mật khẩu mới
+            if (newPass && newPass.trim() !== '') {
+                if (newPass !== confirmPass) {
+                    Swal.fire('Lỗi', 'Mật khẩu xác nhận không khớp!', 'error');
+                    return;
+                }
+            }
 
             // Lấy token (đảm bảo biến token đã được khai báo hoặc lấy từ localStorage)
             const token = localStorage.getItem('token');
@@ -433,7 +460,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ fullName, email })
+                    body: JSON.stringify({ fullName, email, employeeCode, phoneNumber })
                 });
 
                 // 👇 ĐÂY LÀ CHỖ QUAN TRỌNG BẠN THIẾU 👇
@@ -492,7 +519,13 @@
             });
         }
 
-        function logout() { localStorage.clear(); window.location.href = '/index.html'; }
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+            } catch (e) { console.error('Logout error', e); }
+            localStorage.clear();
+            window.location.href = '/index.html';
+        }
 
         loadHospitals();
     </script>

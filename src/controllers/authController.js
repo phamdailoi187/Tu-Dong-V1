@@ -61,12 +61,18 @@ exports.register = async (req, res) => {
 // 2. Đăng Nhập
 exports.login = async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username, email, password } = req.body;
+
+        // Validate required fields
+        if (!username || !email || !password) {
+            return res.status(400).json({ message: 'Vui lòng nhập tên đăng nhập, email và mật khẩu.' });
+        }
 
         const user = await User.findOne({
             where: { username },
             include: [{
                 model: Role,
+                as: 'Roles',
                 attributes: ['slug', 'name'],
                 through: { attributes: [] }
             }]
@@ -75,6 +81,11 @@ exports.login = async (req, res) => {
         if (!user) return res.status(404).json({ message: 'Tài khoản không tồn tại!' });
 
         if (!user.isActive) return res.status(403).json({ message: 'Tài khoản chưa được kích hoạt bởi Admin!' });
+
+        // Ensure provided email matches the user's email in DB (case-insensitive)
+        if ((user.email || '').toLowerCase() !== (email || '').toLowerCase()) {
+            return res.status(400).json({ message: 'Email không khớp với tên đăng nhập.' });
+        }
 
         const validPass = await bcrypt.compare(password, user.password_hash);
         if (!validPass) return res.status(400).json({ message: 'Sai mật khẩu!' });
@@ -99,11 +110,19 @@ exports.login = async (req, res) => {
             expiresAt: expiresAt
         });
 
-        // 6. Trả kết quả
+        // Set refresh token as HttpOnly cookie so browser keeps session
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: false, // set to true in production with HTTPS
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        // 6. Trả kết quả (do not expose refresh token in JS-accessible response)
         res.json({
             message: 'Đăng nhập thành công!',
             accessToken,
-            refreshToken,
             username: user.username,
             roles: user.Roles
         });
@@ -178,5 +197,70 @@ exports.resetPassword = async (req, res) => {
     } catch (error) {
         console.error("❌ LỖI RESET PASS:", error);
         return res.status(500).json({ message: 'Lỗi server: ' + error.message });
+    }
+};
+
+// Refresh access token using refresh token cookie
+exports.refreshToken = async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+        if (!refreshToken) return res.status(401).json({ message: 'Không tìm thấy refresh token' });
+
+        const session = await Session.findOne({ where: { refreshToken, isRevoked: false } });
+        if (!session) return res.status(401).json({ message: 'Session không hợp lệ hoặc đã bị thu hồi' });
+
+        if (new Date(session.expiresAt) < new Date()) {
+            return res.status(401).json({ message: 'Refresh token đã hết hạn' });
+        }
+
+        const user = await User.findByPk(session.user_id, {
+            include: [{ model: Role, as: 'Roles', attributes: ['slug', 'name'], through: { attributes: [] } }]
+        });
+        if (!user) return res.status(404).json({ message: 'Người dùng không tồn tại' });
+
+        const roles = user.Roles ? user.Roles.map(r => r.slug) : [];
+
+        const newAccessToken = jwt.sign(
+            { id: user.id, roles: roles, hospitalId: user.hospitalId },
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
+        );
+
+        // Optionally extend session expiry on refresh
+        const newExpiry = new Date();
+        newExpiry.setDate(newExpiry.getDate() + 7);
+        session.expiresAt = newExpiry;
+        await session.save();
+
+        return res.json({ accessToken: newAccessToken, username: user.username, roles: user.Roles });
+
+    } catch (error) {
+        console.error('Lỗi refresh token:', error);
+        return res.status(500).json({ message: 'Lỗi server' });
+    }
+};
+
+// Logout: revoke session and clear cookie
+exports.logout = async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+        if (!refreshToken) {
+            // ensure cookie cleared on client
+            res.cookie('refreshToken', '', { httpOnly: true, path: '/', maxAge: 0 });
+            return res.status(200).json({ message: 'Đã đăng xuất' });
+        }
+
+        const session = await Session.findOne({ where: { refreshToken } });
+        if (session) {
+            session.isRevoked = true;
+            await session.save();
+        }
+
+        // clear cookie explicitly with same path
+        res.cookie('refreshToken', '', { httpOnly: true, path: '/', maxAge: 0 });
+        return res.json({ message: 'Đăng xuất thành công' });
+    } catch (error) {
+        console.error('Lỗi logout:', error);
+        return res.status(500).json({ message: 'Lỗi server' });
     }
 };

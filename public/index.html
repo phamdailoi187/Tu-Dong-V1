@@ -33,6 +33,10 @@
                 <input type="text" id="username" class="form-control" placeholder="Ví dụ: super_admin" required>
             </div>
             <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" id="email" class="form-control" placeholder="you@example.com" required>
+            </div>
+            <div class="mb-3">
                 <label class="form-label">Mật khẩu</label>
                 <input type="password" id="password" class="form-control" required>
             </div>
@@ -47,17 +51,63 @@
     </div>
 
     <script>
+        // Try to refresh access token using HttpOnly cookie (if user previously logged in)
+        (async () => {
+            try {
+                const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+                if (refreshRes.ok) {
+                    const jd = await refreshRes.json();
+                    if (jd.accessToken) {
+                        localStorage.setItem('token', jd.accessToken);
+                        // After refresh, fetch profile and redirect based on role/permissions
+                        try {
+                            const profRes = await fetch('/api/users/profile', { headers: { 'Authorization': `Bearer ${jd.accessToken}` } });
+                            if (profRes.ok) {
+                                const profJson = await profRes.json();
+                                const user = profJson.user || profJson.data;
+                                let perms = [];
+                                if (user && user.Roles) {
+                                    user.Roles.forEach(r => { if (r.Permissions) r.Permissions.forEach(p => perms.push(p.slug)); });
+                                }
+                                const MASTER = ['manage_system', 'manage_hospital', 'manage_account'];
+                                const hasMaster = MASTER.some(m => perms.includes(m));
+                                // If super admin role explicitly present, go to super-admin
+                                const roleSlugs = user && user.Roles ? user.Roles.map(r => r.slug) : [];
+                                const isSuper = roleSlugs.includes('sieu_admin') || roleSlugs.includes('super_admin');
+                                if (isSuper) {
+                                    window.location.href = '/super-admin.html';
+                                    return;
+                                }
+                                // Hospital admin detection (accept several possible slug variants)
+                                const hospitalRoleVariants = ['admin_bv', 'bv_admin', 'hospital_admin', 'admin_bvhhmtw'];
+                                const isHospitalAdmin = roleSlugs.some(s => hospitalRoleVariants.includes(s)) || perms.includes('manage_staff') || perms.includes('manage_roles') || hasMaster;
+                                if (isHospitalAdmin) {
+                                    window.location.href = '/hospital-admin.html';
+                                    return;
+                                }
+                            }
+                        } catch (e) { console.error('Redirect after refresh error', e); }
+                        // default
+                        window.location.href = '/staff.html';
+                    }
+                }
+            } catch (e) {
+                // ignore - no active session
+            }
+        })();
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const msgDiv = document.getElementById('message');
 
             try {
                 const res = await fetch('/api/auth/login', {
                     method: 'POST',
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, email, password })
                 });
 
                 const data = await res.json();
@@ -77,16 +127,47 @@
                 msgDiv.innerText = 'Đăng nhập thành công! Đang chuyển hướng...';
 
                 setTimeout(() => {
+                    // After storing token, fetch profile and decide by roles/permissions returned from server.
+                    (async () => {
+                        const tok = localStorage.getItem('token');
+                        try {
+                            const profRes = await fetch('/api/users/profile', { headers: { 'Authorization': `Bearer ${tok}` } });
+                            if (profRes.ok) {
+                                const profJson = await profRes.json();
+                                const user = profJson.user || profJson.data;
+                                // collect permission slugs
+                                let perms = [];
+                                const roleSlugs = [];
+                                if (user && user.Roles) {
+                                    user.Roles.forEach(r => {
+                                        roleSlugs.push(r.slug);
+                                        if (r.Permissions) r.Permissions.forEach(p => perms.push(p.slug));
+                                    });
+                                }
+                                const MASTER = ['manage_system', 'manage_hospital', 'manage_account'];
+                                const hasMaster = MASTER.some(m => perms.includes(m));
 
-                    if (roles.includes('sieu_admin') || roles.includes('super_admin')) {
-                        window.location.href = '/super-admin.html';
-                    }
-                    else if (roles.includes('admin_bv') || roles.includes('hospital_admin')) {
-                        window.location.href = '/hospital-admin.html';
-                    }
-                    else {
-                        alert('Role hiện tại: ' + roles.join(', ') + '\nChưa được cấu hình trang demo!');
-                    }
+                                // If explicitly a super admin role, go to super-admin
+                                const isSuper2 = roleSlugs.includes('sieu_admin') || roleSlugs.includes('super_admin');
+                                if (isSuper2) {
+                                    window.location.href = '/super-admin.html';
+                                    return;
+                                }
+
+                                // Hospital admin detection (accept several possible slug variants)
+                                const hospitalRoleVariants2 = ['admin_bv', 'bv_admin', 'hospital_admin', 'admin_bvhhmtw'];
+                                const isHospitalAdmin2 = roleSlugs.some(s => hospitalRoleVariants2.includes(s)) || perms.includes('manage_staff') || perms.includes('manage_roles') || hasMaster;
+                                if (isHospitalAdmin2) {
+                                    window.location.href = '/hospital-admin.html';
+                                    return;
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error fetching profile for redirect:', e);
+                        }
+                        // default: staff dashboard
+                        window.location.href = '/staff.html';
+                    })();
                 }, 1000);
 
             } catch (err) {

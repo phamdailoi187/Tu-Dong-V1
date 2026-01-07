@@ -243,6 +243,10 @@
                                 <span class="text-muted small fw-bold">Mã NV:</span><span class="fw-bold text-primary"
                                     id="p_code">---</span>
                             </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted small fw-bold">Ngày tạo:</span><span
+                                    class="fw-bold text-success" id="p_createdAt">---</span>
+                            </div>
                             <div>
                                 <span class="text-muted small fw-bold d-block">Vai trò:</span>
                                 <div id="p_roles">---</div>
@@ -262,9 +266,13 @@
                                 <input type="email" id="p_email" class="form-control">
                             </div>
                             <div class="col-6">
-                                <label class="small fw-bold">Số điện thoại</label>
-                                <input type="text" id="p_phone" class="form-control" placeholder="09xx...">
+                                <label class="small fw-bold">Mã nhân viên</label>
+                                <input type="text" id="p_employeeCode" class="form-control" placeholder="NV001">
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small fw-bold">Số điện thoại</label>
+                            <input type="text" id="p_phone" class="form-control" placeholder="09xx...">
                         </div>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary fw-bold"><i class="fas fa-save"></i> Cập nhật
@@ -346,17 +354,26 @@
 
         // --- 1. PROFILE & SYSTEM INIT ---
         async function loadProfile() {
+            console.log('loadProfile called');
             try {
                 const res = await fetch('/api/users/profile', { headers: { 'Authorization': `Bearer ${token}` } });
+                console.log('res.ok:', res.ok);
                 if (res.ok) {
                     const json = await res.json();
                     const user = json.user || json.data;
 
+                    console.log('User data:', user);
+                    console.log('created_at:', user.created_at);
+                    console.log('createdAt:', user.createdAt);
+
                     document.getElementById('welcomeMsg').innerHTML = `Xin chào, ${user.fullName || user.username}!`;
 
                     // Fill Info
+                    console.log('Element p_createdAt:', document.getElementById('p_createdAt'));
                     document.getElementById('p_id').innerText = '#' + user.id;
                     document.getElementById('p_code').innerText = user.employeeCode || '---';
+                    document.getElementById('p_createdAt').innerText = (user.created_at || user.createdAt) ? new Date(user.created_at || user.createdAt).toLocaleDateString('vi-VN') : '---';
+                    console.log('p_createdAt set to:', document.getElementById('p_createdAt').innerText);
                     document.getElementById('p_roles').innerHTML = (user.Roles && user.Roles.length > 0)
                         ? user.Roles.map(r => `<span class="badge bg-info text-dark me-1">${r.name}</span>`).join('')
                         : '<span class="text-muted small">Chưa phân quyền</span>';
@@ -365,12 +382,21 @@
                     document.getElementById('p_username').value = user.username;
                     document.getElementById('p_fullName').value = user.fullName || '';
                     document.getElementById('p_email').value = user.email || '';
+                    document.getElementById('p_employeeCode').value = user.employeeCode || '';
                     document.getElementById('p_phone').value = user.phoneNumber || '';
                 }
             } catch (e) { console.error(e); }
         }
 
-        function openProfileModal() { new bootstrap.Modal(document.getElementById('profileModal')).show(); }
+        function openProfileModal() {
+            new bootstrap.Modal(document.getElementById('profileModal')).show();
+        }
+
+        // Load profile when modal is shown
+        document.getElementById('profileModal').addEventListener('shown.bs.modal', () => {
+            console.log('shown.bs.modal triggered');
+            loadProfile();
+        });
 
         // Xử lý Submit Profile (Duy nhất 1 listener)
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
@@ -379,6 +405,7 @@
                 const body = {
                     fullName: document.getElementById('p_fullName').value,
                     email: document.getElementById('p_email').value,
+                    employeeCode: document.getElementById('p_employeeCode').value,
                     phoneNumber: document.getElementById('p_phone').value
                 };
                 const res = await fetch('/api/users/update-profile', {
@@ -459,7 +486,7 @@
                     set('detail_email', u.email);
                     set('detail_phone', u.phoneNumber);
                     set('detail_employeeCode', u.employeeCode);
-                    set('detail_createdAt', u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '---');
+                    set('detail_createdAt', (u.created_at || u.createdAt) ? new Date(u.created_at || u.createdAt).toLocaleDateString('vi-VN') : '---');
                     set('detail_role', (u.Roles && u.Roles.length) ? `<span class="badge bg-info text-dark">${u.Roles[0].name}</span>` : 'Chưa gán');
                     set('detail_status', u.isActive ? '<span class="text-success fw-bold">Hoạt động</span>' : '<span class="text-danger fw-bold">Đã khóa</span>');
 
@@ -517,7 +544,8 @@
             const data = await res.json();
             const ops = data.data.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
             document.getElementById('roleSelect').innerHTML = `<option value="">--Chọn--</option>` + ops;
-            document.getElementById('editRoleSelect').innerHTML = ops;
+            // Allow clearing a role: add an explicit "No role / Remove role" option with empty value
+            document.getElementById('editRoleSelect').innerHTML = `<option value="">--Gỡ chức vụ (Chưa gán)--</option>` + ops;
 
             // Render Table
             document.getElementById('rolesTable').innerHTML = data.data.map(r => `
@@ -579,7 +607,13 @@
             loadPendingUsers();
         }
 
-        function logout() { localStorage.removeItem('token'); window.location.href = '/index.html'; }
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+            } catch (e) { console.error('Logout error', e); }
+            localStorage.removeItem('token');
+            window.location.href = '/index.html';
+        }
 
         // INIT
         loadProfile();

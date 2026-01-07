@@ -11,7 +11,11 @@ exports.verifyToken = async (req, res, next) => {
         const user = await User.findByPk(decoded.id, {
             include: [{
                 model: Role,
-                include: [Permission]
+                as: 'Roles',
+                include: [{
+                    model: Permission,
+                    as: 'Permissions'
+                }]
             }]
         });
 

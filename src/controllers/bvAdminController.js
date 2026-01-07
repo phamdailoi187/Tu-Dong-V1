@@ -1,6 +1,7 @@
 const User = require('../models/user');
 const Role = require('../models/role');
 const Permission = require('../models/permission');
+const Hospital = require('../models/hospital');
 const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
 // 1. Lấy danh sách chờ duyệt (Strict Hierarchy)
@@ -11,7 +12,7 @@ exports.getPendingUsers = async (req, res) => {
 
         // Lấy thông tin người đang gọi API để biết là Siêu Admin hay Admin BV
         const currentUser = await User.findByPk(currentUserId, {
-            include: [Role]
+            include: [{ model: Role, as: 'Roles' }]
         });
 
         const currentUserRoles = currentUser.Roles.map(r => r.slug);
@@ -78,12 +79,12 @@ exports.approveUser = async (req, res) => {
         const currentUserId = req.user.id;
 
         // Lấy lại info người duyệt để chắc chắn logic
-        const currentUser = await User.findByPk(currentUserId, { include: [Role] });
+        const currentUser = await User.findByPk(currentUserId, { include: [{ model: Role, as: 'Roles' }] });
         const currentUserRoles = currentUser.Roles.map(r => r.slug);
 
         // Tìm user cần được duyệt
         const targetUser = await User.findByPk(userId, {
-            include: [Role]
+            include: [{ model: Role, as: 'Roles' }]
         });
 
         if (!targetUser) {
@@ -170,7 +171,7 @@ exports.getActiveUsers = async (req, res) => {
     try {
         const currentUserId = req.user.id;
         const currentHospitalId = req.user.hospitalId;
-        const currentUser = await User.findByPk(currentUserId, { include: [Role] });
+        const currentUser = await User.findByPk(currentUserId, { include: [{ model: Role, as: 'Roles' }] });
         const currentUserRoles = currentUser.Roles.map(r => r.slug);
         let whereCondition = {};
         let includeOptions = [];
@@ -269,9 +270,9 @@ exports.updateStaffRole = async (req, res) => {
 exports.lockUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        const currentUser = await User.findByPk(req.user.id, { include: [Role] });
+        const currentUser = await User.findByPk(req.user.id, { include: [{ model: Role, as: 'Roles' }] });
         const currentUserRoles = currentUser.Roles.map(r => r.slug);
-        const targetUser = await User.findByPk(userId, { include: [Role] });
+        const targetUser = await User.findByPk(userId, { include: [{ model: Role, as: 'Roles' }] });
         if (!targetUser) return res.status(404).json({ message: 'User không tồn tại' });
         else if (currentUserRoles.includes('admin_bv') || currentUserRoles.includes('manage_hospital')) {
             if (targetUser.hospitalId !== currentUser.hospitalId) { return res.status(403).json({ message: 'Người này không thuộc bệnh viện của bạn!' }); }

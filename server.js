@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 //const seedData2 = require('./src/config/seeder2');
 const { connectDB, sequelize } = require('./src/config/db');
 
@@ -21,8 +22,8 @@ const bvAdminRoutes = require('./src/routes/bvAdminRoutes');
 
 Hospital.hasMany(User, { foreignKey: 'hospitalId' });
 User.belongsTo(Hospital, { foreignKey: 'hospitalId' });
-User.belongsToMany(Role, { through: 'user_has_roles', foreignKey: 'user_id' });
-Role.belongsToMany(User, { through: 'user_has_roles', foreignKey: 'role_id' });
+User.belongsToMany(Role, { through: 'user_has_roles', foreignKey: 'user_id', as: 'Roles' });
+Role.belongsToMany(User, { through: 'user_has_roles', foreignKey: 'role_id', as: 'Users' });
 Role.belongsToMany(Permission, { through: 'role_has_permissions', foreignKey: 'role_id' });
 Permission.belongsToMany(Role, { through: 'role_has_permissions', foreignKey: 'permission_id' });
 User.hasMany(Session, { foreignKey: 'user_id' });
@@ -34,8 +35,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/auth', authRoutes);

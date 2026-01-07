@@ -1,12 +1,14 @@
 const User = require('../models/user');
+const Role = require('../models/role');
+const Permission = require('../models/permission');
 const bcrypt = require('bcryptjs');
 
 // 1. Xem hồ sơ cá nhân (Quyền: view_profile)
 exports.getProfile = async (req, res) => {
     try {
         const user = await User.findByPk(req.user.id, {
-            attributes: { exclude: ['password', 'password_hash'] },
-            include: [{ model: Role, as: 'Roles' }]
+            attributes: ['id', 'username', 'email', 'fullName', 'employeeCode', 'phoneNumber', 'created_at', 'updated_at'],
+            include: [{ model: Role, as: 'Roles', include: [{ model: Permission, as: 'Permissions' }] }]
         });
 
         if (!user) return res.status(404).json({ message: 'User không tồn tại' });
@@ -19,12 +21,14 @@ exports.getProfile = async (req, res) => {
 // 2. Cập nhật hồ sơ (Quyền: update_profile)
 exports.updateProfile = async (req, res) => {
     try {
-        const { fullName, email } = req.body;
+        const { fullName, email, employeeCode, phoneNumber } = req.body;
         console.log("Dữ liệu nhận được:", req.body);
         const user = await User.findByPk(req.user.id);
         if (!user) return res.status(404).json({ message: 'User không tồn tại' });
         if (fullName !== undefined) user.fullName = fullName;
         if (email !== undefined) user.email = email;
+        if (employeeCode !== undefined) user.employeeCode = employeeCode;
+        if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
         await user.save();
         res.json({ message: '✅ Cập nhật thông tin thành công!', user });
     } catch (error) {
