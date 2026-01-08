@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>NVYT - Hồ sơ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         body {
             background: #f4f6f9;
@@ -38,6 +40,20 @@
         dt {
             font-weight: 700
         }
+
+        .profile-modal .modal-content {
+            border-radius: 10px;
+        }
+
+        .profile-modal .modal-header {
+            background: #0d6efd;
+            color: #fff;
+            border-bottom: none;
+        }
+
+        .profile-modal .modal-body {
+            padding: 1.5rem;
+        }
     </style>
 </head>
 
@@ -45,8 +61,16 @@
     <nav class="navbar navbar-expand-lg" style="background:#0d6efd">
         <div class="container">
             <a class="navbar-brand text-white fw-bold" href="#">NVYT Dashboard</a>
-            <div class="d-flex ms-auto">
-                <button id="logoutBtn" class="btn btn-outline-light btn-sm">Đăng xuất</button>
+            <div class="d-flex ms-auto align-items-center">
+                <span class="navbar-text text-white me-3 fw-bold" id="welcomeMsg">
+                    <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                </span>
+                <button onclick="openProfileModal()" class="btn btn-light btn-sm me-2 text-primary fw-bold shadow-sm">
+                    <i class="fas fa-user-circle"></i> Hồ sơ
+                </button>
+                <button id="logoutBtn" class="btn btn-outline-light btn-sm fw-bold shadow-sm">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </button>
             </div>
         </div>
     </nav>
@@ -70,11 +94,97 @@
             <section class="col-lg-8">
                 <div class="title-bar">NVYT - Hồ sơ</div>
                 <div id="content" class="card panel p-3">
-                    <div class="text-muted">Đang tải...</div>
+                    <div class="text-muted">Chọn một hành động từ menu bên trái để bắt đầu.</div>
                 </div>
             </section>
         </div>
     </main>
+
+    <!-- Modal hiển thị hồ sơ cá nhân -->
+    <div class="modal fade profile-modal" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-id-card"></i> Hồ sơ cá nhân</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="profileForm">
+                        <div class="bg-light p-3 rounded mb-3 border">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted small fw-bold">ID:</span><span class="fw-bold text-dark"
+                                    id="p_id">---</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted small fw-bold">Mã NV:</span><span class="fw-bold text-primary"
+                                    id="p_code">---</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted small fw-bold">Ngày tạo:</span><span
+                                    class="fw-bold text-success" id="p_createdAt">---</span>
+                            </div>
+                            <div>
+                                <span class="text-muted small fw-bold d-block">Vai trò:</span>
+                                <div id="p_roles">---</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small fw-bold">Username</label>
+                            <input type="text" id="p_username" class="form-control bg-light" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small fw-bold">Họ tên (*)</label>
+                            <input type="text" id="p_fullName" class="form-control" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="small fw-bold">Email</label>
+                                <input type="email" id="p_email" class="form-control">
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold">Mã nhân viên</label>
+                                <input type="text" id="p_employeeCode" class="form-control" placeholder="NV001">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small fw-bold">Số điện thoại</label>
+                            <input type="text" id="p_phone" class="form-control" placeholder="09xx...">
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary fw-bold"><i class="fas fa-save"></i> Cập nhật
+                                hồ sơ</button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="border rounded p-3 bg-light">
+                        <h6 class="fw-bold text-danger mb-3"><i class="fas fa-key"></i> Đổi mật khẩu</h6>
+                        <form id="changePasswordForm">
+                            <div class="mb-3">
+                                <label class="small fw-bold">Mật khẩu hiện tại (*)</label>
+                                <input type="password" id="currentPassword" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="small fw-bold">Mật khẩu mới (*)</label>
+                                <input type="password" id="newPassword" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="small fw-bold">Xác nhận mật khẩu mới (*)</label>
+                                <input type="password" id="confirmPassword" class="form-control" required>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-danger fw-bold"><i class="fas fa-key"></i> Đổi mật
+                                    khẩu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         let token;
@@ -125,34 +235,97 @@
                 const rolesHtml = (user.Roles && user.Roles.length) ? user.Roles.map(r => `<span class="badge badge-role me-1">${r.name}</span>`).join('') : '<span class="text-muted small">Chưa gán</span>';
                 document.getElementById('u_roles').innerHTML = rolesHtml;
 
+                // Cập nhật welcome message
+                const welcomeMsg = document.getElementById('welcomeMsg');
+                if (welcomeMsg) {
+                    welcomeMsg.innerHTML = `Xin chào, ${user.fullName || user.username}!`;
+                }
+
                 const perms = flattenPermissions(user);
                 renderActions(perms, user);
-                showProfileView(user);
             } catch (e) {
                 console.error(e);
                 document.getElementById('content').innerHTML = '<div class="text-danger">Lỗi khi tải thông tin hồ sơ.</div>';
             }
         }
 
+        // Hàm load profile vào modal
+        async function loadProfile() {
+            try {
+                const res = await fetch('/api/users/profile', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const json = await res.json();
+                    const user = json.user || json.data;
+
+                    // Fill Info
+                    document.getElementById('p_id').innerText = '#' + user.id;
+                    document.getElementById('p_code').innerText = user.employeeCode || '---';
+                    document.getElementById('p_createdAt').innerText = (user.created_at || user.createdAt) ? new Date(user.created_at || user.createdAt).toLocaleDateString('vi-VN') : '---';
+                    document.getElementById('p_roles').innerHTML = (user.Roles && user.Roles.length > 0)
+                        ? user.Roles.map(r => `<span class="badge bg-info text-dark me-1">${r.name}</span>`).join('')
+                        : '<span class="text-muted small">Chưa phân quyền</span>';
+
+                    // Fill Form
+                    document.getElementById('p_username').value = user.username;
+                    document.getElementById('p_fullName').value = user.fullName || '';
+                    document.getElementById('p_email').value = user.email || '';
+                    document.getElementById('p_employeeCode').value = user.employeeCode || '';
+                    document.getElementById('p_phone').value = user.phoneNumber || '';
+                }
+            } catch (e) {
+                console.error('Lỗi load profile:', e);
+            }
+        }
+
+        // Hàm mở modal profile
+        function openProfileModal() {
+            new bootstrap.Modal(document.getElementById('profileModal')).show();
+        }
+
         function renderActions(perms, user) {
             const container = document.getElementById('actionsContainer');
             container.innerHTML = '';
-            const btnView = document.createElement('button'); btnView.className = 'btn btn-outline-primary'; btnView.innerText = 'Xem hồ sơ'; btnView.onclick = () => showProfileView(user); container.appendChild(btnView);
-            if (hasPerm(perms, 'update_profile')) { const btnEdit = document.createElement('button'); btnEdit.className = 'btn btn-outline-success'; btnEdit.innerText = 'Cập nhật hồ sơ'; btnEdit.onclick = () => showProfileEdit(user); container.appendChild(btnEdit); }
-            if (hasPerm(perms, 'change_password')) { const btnPw = document.createElement('button'); btnPw.className = 'btn btn-outline-secondary'; btnPw.innerText = 'Đổi mật khẩu'; btnPw.onclick = () => showChangePassword(); container.appendChild(btnPw); }
+            const btnView = document.createElement('button');
+            btnView.className = 'btn btn-outline-primary';
+            btnView.innerText = 'Xem hồ sơ';
+            btnView.onclick = () => showProfileView(user);
+            container.appendChild(btnView);
+            if (hasPerm(perms, 'update_profile')) {
+                const btnEdit = document.createElement('button');
+                btnEdit.className = 'btn btn-outline-success';
+                btnEdit.innerText = 'Cập nhật hồ sơ';
+                btnEdit.onclick = () => showProfileEdit(user);
+                container.appendChild(btnEdit);
+            }
+            if (hasPerm(perms, 'change_password')) {
+                const btnPw = document.createElement('button');
+                btnPw.className = 'btn btn-outline-secondary';
+                btnPw.innerText = 'Đổi mật khẩu';
+                btnPw.onclick = () => showChangePassword();
+                container.appendChild(btnPw);
+            }
         }
 
         function showProfileView(user) {
-            document.getElementById('content').innerHTML = `
-                <h5>Hồ sơ cá nhân</h5>
+            // Hiển thị thông tin hồ sơ trong modal
+            const modalBody = document.getElementById('profileModalBody');
+            modalBody.innerHTML = `
                 <dl class="row">
-                    <dt class="col-sm-3">Họ & Tên</dt><dd class="col-sm-9">${user.fullName || '---'}</dd>
-                    <dt class="col-sm-3">Username</dt><dd class="col-sm-9">${user.username || '---'}</dd>
-                    <dt class="col-sm-3">Email</dt><dd class="col-sm-9">${user.email || '---'}</dd>
-                    <dt class="col-sm-3">Mã NV</dt><dd class="col-sm-9">${user.employeeCode || '---'}</dd>
-                    <dt class="col-sm-3">SĐT</dt><dd class="col-sm-9">${user.phoneNumber || '---'}</dd>
+                    <dt class="col-sm-4">Họ & Tên</dt>
+                    <dd class="col-sm-8">${user.fullName || '---'}</dd>
+                    <dt class="col-sm-4">Username</dt>
+                    <dd class="col-sm-8">${user.username || '---'}</dd>
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">${user.email || '---'}</dd>
+                    <dt class="col-sm-4">Mã NV</dt>
+                    <dd class="col-sm-8">${user.employeeCode || '---'}</dd>
+                    <dt class="col-sm-4">SĐT</dt>
+                    <dd class="col-sm-8">${user.phoneNumber || '---'}</dd>
                 </dl>
             `;
+            // Mở modal
+            const modal = new bootstrap.Modal(document.getElementById('profileModal'));
+            modal.show();
         }
 
         function showProfileEdit(user) {
@@ -208,6 +381,84 @@
                 }
             });
         }
+
+        // Load profile when modal is shown
+        document.getElementById('profileModal').addEventListener('shown.bs.modal', () => {
+            loadProfile();
+        });
+
+        // Xử lý Submit Profile
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const body = {
+                    fullName: document.getElementById('p_fullName').value,
+                    email: document.getElementById('p_email').value,
+                    employeeCode: document.getElementById('p_employeeCode').value,
+                    phoneNumber: document.getElementById('p_phone').value
+                };
+                const res = await fetch('/api/users/update-profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('✅ Cập nhật thành công!');
+                    loadProfile();
+                    await load(); // Reload sidebar info
+                }
+                else { alert('❌ ' + data.message); }
+            } catch (e) {
+                console.error(e);
+                alert('❌ Lỗi server');
+            }
+        });
+
+        // Xử lý Đổi mật khẩu
+        document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Kiểm tra mật khẩu mới và xác nhận khớp nhau
+            if (newPassword !== confirmPassword) {
+                alert('❌ Mật khẩu mới và xác nhận mật khẩu không khớp!');
+                return;
+            }
+
+            // Kiểm tra độ dài mật khẩu mới
+            if (newPassword.length < 6) {
+                alert('❌ Mật khẩu mới phải có ít nhất 6 ký tự!');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/users/change-password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('✅ ' + data.message);
+                    // Xóa form sau khi đổi mật khẩu thành công
+                    document.getElementById('changePasswordForm').reset();
+                    // Có thể yêu cầu đăng nhập lại
+                    if (confirm('Bạn có muốn đăng xuất và đăng nhập lại với mật khẩu mới không?')) {
+                        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+                        localStorage.removeItem('token');
+                        window.location.href = '/index.html';
+                    }
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('❌ Lỗi server: ' + e.message);
+            }
+        });
 
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
