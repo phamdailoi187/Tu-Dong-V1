@@ -9,33 +9,303 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f0f2f5;
+            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #e3f2fd 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+            box-shadow: 0 10px 30px rgba(17, 153, 142, 0.4);
+            border-radius: 0 0 20px 20px;
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .navbar-brand i {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .btn-profile {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            color: white !important;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-profile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+        }
+
+        .btn-logout {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+        }
+
+        .nav-tabs {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 0.5rem;
+        }
+
+        .nav-tabs .nav-link {
+            border-radius: 10px;
+            margin: 0 0.25rem;
+            transition: all 0.3s ease;
+            color: #6c757d;
+        }
+
+        .nav-tabs .nav-link:hover {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+            transform: translateY(-2px);
+        }
+
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white !important;
+            border: none;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
         }
 
         .permission-item {
             min-width: 220px;
         }
 
-        .nav-tabs .nav-link.active {
-            color: #0d6efd !important;
-            border-bottom: 3px solid #0d6efd;
-            background-color: transparent;
-        }
-
-        .nav-link {
-            color: #6c757d;
-        }
-
         .card {
             border: none;
-            border-radius: 10px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            border-radius: 15px 15px 0 0;
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+
+        .card-header.bg-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+        }
+
+        .card-header.bg-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
+        .card-header.bg-white {
+            background: white;
+        }
+
+        .card-header.bg-warning {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%) !important;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
         }
 
         .table thead th {
             font-weight: 600;
             text-transform: uppercase;
             font-size: 0.85rem;
-            color: #6c757d;
+            color: white;
+            border: none;
+            padding: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .table tbody tr:hover {
+            background: linear-gradient(90deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);
+            transform: scale(1.01);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .btn-action {
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+            border: none;
+            margin: 0 2px;
+        }
+
+        .btn-view {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-view:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-lock {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            color: white;
+        }
+
+        .btn-lock:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(246, 211, 101, 0.4);
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border: none;
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.6);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-outline-secondary {
+            border: 2px solid #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-secondary:hover {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .badge.bg-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+        }
+
+        .badge.bg-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+        }
+
+        .badge.bg-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        }
+
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            border-radius: 20px 20px 0 0;
+            border: none;
+        }
+
+        .modal-header.bg-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .modal-header.bg-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .modal-header.bg-warning {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        }
+
+        .form-control:focus {
+            border-color: #4facfe;
+            box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+        }
+
+        .form-select:focus {
+            border-color: #4facfe;
+            box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+        }
+
+        .text-primary {
+            color: #667eea !important;
+        }
+
+        .text-warning {
+            color: #fda085 !important;
         }
     </style>
 </head>
@@ -53,11 +323,10 @@
                     <span class="navbar-text text-white me-3 fw-bold" id="welcomeMsg">
                         <i class="fas fa-spinner fa-spin"></i> Đang tải...
                     </span>
-                    <button onclick="openProfileModal()"
-                        class="btn btn-light btn-sm me-2 text-primary fw-bold shadow-sm">
+                    <button onclick="openProfileModal()" class="btn btn-profile btn-sm me-2 fw-bold">
                         <i class="fas fa-user-circle"></i> Hồ sơ
                     </button>
-                    <button onclick="logout()" class="btn btn-danger btn-sm fw-bold shadow-sm">
+                    <button onclick="logout()" class="btn btn-logout btn-sm fw-bold">
                         <i class="fas fa-sign-out-alt"></i> Thoát
                     </button>
                 </div>
@@ -504,12 +773,12 @@
                             <td><b>${u.fullName}</b>${empCode}</td>
                             <td>${u.username}</td>
                             <td>${roleName}</td>
-                            <td>${u.isActive ? 'Hoạt động' : 'Đã khóa'}</td>
+                            <td>${u.isActive ? '<span class="badge bg-success">Hoạt động</span>' : '<span class="badge bg-danger">Đã khóa</span>'}</td>
                             <td class="text-center">
-                                <button onclick="viewStaffDetail(${u.id})" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                <button onclick="openEditStaffModal(${u.id})" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></button>
-                                <button onclick="lockUser(${u.id})" class="btn btn-sm ${u.isActive ? 'btn-outline-warning' : 'btn-outline-success'}"><i class="fas ${u.isActive ? 'fa-lock' : 'fa-unlock'}"></i></button>
-                                <button onclick="deleteStaff(${u.id})" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                <button onclick="viewStaffDetail(${u.id})" class="btn btn-sm btn-action btn-view" title="Xem chi tiết"><i class="fas fa-eye"></i></button>
+                                <button onclick="openEditStaffModal(${u.id})" class="btn btn-sm btn-action btn-edit" title="Sửa"><i class="fas fa-edit"></i></button>
+                                <button onclick="lockUser(${u.id})" class="btn btn-sm btn-action btn-lock" title="${u.isActive ? 'Khóa' : 'Mở khóa'}"><i class="fas ${u.isActive ? 'fa-lock' : 'fa-unlock'}"></i></button>
+                                <button onclick="deleteStaff(${u.id})" class="btn btn-sm btn-action btn-delete" title="Xóa"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>`;
                     });
@@ -621,7 +890,7 @@
                     <td class="fw-bold">${r.name}</td>
                     <td><code>${r.slug}</code></td>
                     <td><small>${r.Permissions ? r.Permissions.map(p => p.name).join(', ') : ''}</small></td>
-                    <td class="text-center"><button onclick="deleteRole(${r.id})" class="btn btn-sm btn-outline-danger">X</button></td>
+                    <td class="text-center"><button onclick="deleteRole(${r.id})" class="btn btn-sm btn-action btn-delete" title="Xóa chức vụ">X</button></td>
                 </tr>`).join('');
         }
 
@@ -663,7 +932,7 @@
                     <tr>
                         <td>${u.id}</td><td>${u.fullName}</td><td>${u.email}</td><td>${u.username}</td>
                         <td>${new Date(u.createdAt).toLocaleDateString()}</td>
-                        <td><button onclick="approveUser(${u.id})" class="btn btn-sm btn-success">Duyệt</button></td>
+                        <td><button onclick="approveUser(${u.id})" class="btn btn-sm btn-success" title="Duyệt đăng ký">Duyệt</button></td>
                     </tr>`).join('');
             } else tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3">Không có yêu cầu nào</td></tr>';
         }
